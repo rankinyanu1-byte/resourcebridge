@@ -1,0 +1,3946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResourceBridge — Surplus to Need</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23703F37'/%3E%3Cellipse cx='18' cy='13' rx='9' ry='7' fill='%23B7C89A' transform='rotate(-35 18 13)'/%3E%3Cline x1='10' y1='22' x2='20' y2='10' stroke='%23703F37' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --beige:       #CBB7A6;
+            --blue:        #7D94B5;
+            --pink:        #C29591;
+            --brown:       #703F37;
+            --sage:        #B7C89A;
+            --beige-light: #F0E9E2;
+            --blue-light:  #E8EDF5;
+            --pink-light:  #F5ECEB;
+            --sage-light:  #EBF0E3;
+            --brown-dark:  #4A2922;
+            --text-dark:   #2C1F1B;
+            --text-mid:    #6B5B55;
+            --text-soft:   #A0918C;
+            --white:       #FDFAF7;
+            --surface:     #FAF7F4;
+            --border:      #E8E0D8;
+            --font-display: 'Cormorant Garamond', Georgia, serif;
+            --font-body:   'DM Sans', system-ui, sans-serif;
+            --radius-sm:   10px;
+            --radius-md:   16px;
+            --radius-lg:   24px;
+            --radius-xl:   32px;
+            --shadow-xs:   0 1px 4px rgba(112,63,55,0.06);
+            --shadow-sm:   0 2px 12px rgba(112,63,55,0.08);
+            --shadow-md:   0 6px 28px rgba(112,63,55,0.11);
+            --shadow-lg:   0 16px 48px rgba(112,63,55,0.14);
+            --shadow-xl:   0 24px 64px rgba(112,63,55,0.18);
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--surface);
+            color: var(--text-dark);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(18px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+        @keyframes slideRight {
+            from { transform: translateX(420px); opacity: 0; }
+            to   { transform: translateX(0); opacity: 1; }
+        }
+
+        .fade-up { animation: fadeUp 0.55s cubic-bezier(.22,.68,0,1.2) both; }
+        .fade-up-1 { animation-delay: .05s; }
+        .fade-up-2 { animation-delay: .12s; }
+        .fade-up-3 { animation-delay: .19s; }
+        .fade-up-4 { animation-delay: .26s; }
+
+        
+        .app-container {
+            max-width: 1360px;
+            margin: 0 auto;
+            padding: 0 24px 60px;
+        }
+
+        
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 40px;
+            margin: 0 -24px 40px;
+            background: rgba(253,250,247,0.72);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(203,183,166,0.35);
+            box-shadow: 0 2px 24px rgba(112,63,55,0.07);
+            animation: fadeIn 0.4s ease both;
+        }
+
+        .logo {
+            font-family: var(--font-display);
+            font-size: 26px;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            color: var(--brown);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: default;
+        }
+        .logo-leaf {
+            width: 30px;
+            height: 30px;
+            background: var(--sage);
+            border-radius: 50% 4px 50% 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+            box-shadow: var(--shadow-xs);
+        }
+        .logo-tagline {
+            font-family: var(--font-body);
+            font-size: 11px;
+            font-weight: 400;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--text-soft);
+            display: block;
+            margin-top: 2px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-pill {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 16px 8px 8px;
+            background: var(--beige-light);
+            border: 1px solid var(--border);
+            border-radius: 40px;
+            transition: box-shadow 0.25s;
+        }
+        .user-pill:hover { box-shadow: var(--shadow-sm); }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--beige);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            box-shadow: var(--shadow-xs);
+            flex-shrink: 0;
+        }
+
+        .user-name {
+            font-weight: 500;
+            font-size: 14px;
+            color: var(--text-dark);
+            line-height: 1.2;
+        }
+        .user-role {
+            font-size: 11px;
+            color: var(--text-soft);
+            text-transform: capitalize;
+            letter-spacing: 0.04em;
+        }
+
+        
+        .btn {
+            padding: 11px 22px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: var(--font-body);
+            font-size: 13.5px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(.22,.68,0,1.2);
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            letter-spacing: 0.01em;
+            white-space: nowrap;
+        }
+        .btn:active { transform: scale(0.97); }
+
+        .btn-primary {
+            background: var(--brown);
+            color: var(--white);
+            box-shadow: 0 3px 14px rgba(112,63,55,0.25);
+        }
+        .btn-primary:hover {
+            background: var(--brown-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(112,63,55,0.32);
+        }
+
+        .btn-secondary {
+            background: var(--beige-light);
+            color: var(--brown);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover {
+            background: var(--beige);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-success {
+            background: var(--sage);
+            color: var(--brown-dark);
+            box-shadow: 0 3px 12px rgba(183,200,154,0.35);
+        }
+        .btn-success:hover {
+            background: #a5ba87;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(183,200,154,0.45);
+        }
+
+        .btn-danger {
+            background: var(--pink-light);
+            color: var(--brown);
+            border: 1px solid var(--pink);
+        }
+        .btn-danger:hover {
+            background: var(--pink);
+            color: var(--white);
+            transform: translateY(-1px);
+        }
+
+        .btn-warning {
+            background: #f0d9a0;
+            color: #6b4a00;
+        }
+        .btn-warning:hover { background: #e5ca82; transform: translateY(-1px); }
+
+        .btn-small { padding: 8px 16px; font-size: 12.5px; }
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-soft);
+            border: 1px solid var(--border);
+        }
+        .btn-ghost:hover {
+            background: var(--beige-light);
+            color: var(--text-dark);
+        }
+
+    
+        .content {
+            background: var(--white);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border);
+            padding: 44px 48px;
+            min-height: 600px;
+            box-shadow: var(--shadow-md);
+            animation: fadeUp 0.5s ease both;
+        }
+
+    
+        .tab-container {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 40px;
+            background: var(--beige-light);
+            padding: 5px;
+            border-radius: var(--radius-md);
+            width: fit-content;
+            overflow-x: auto;
+        }
+
+        .tab {
+            padding: 10px 22px;
+            background: transparent;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-family: var(--font-body);
+            font-size: 13.5px;
+            font-weight: 500;
+            color: var(--text-soft);
+            transition: all 0.22s ease;
+            white-space: nowrap;
+        }
+        .tab:hover { color: var(--brown); background: rgba(255,255,255,0.6); }
+        .tab.active {
+            background: var(--white);
+            color: var(--brown);
+            box-shadow: var(--shadow-xs);
+            font-weight: 600;
+        }
+
+        
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 36px;
+        }
+
+        .dashboard-title {
+            font-family: var(--font-display);
+            font-size: 38px;
+            font-weight: 400;
+            color: var(--text-dark);
+            letter-spacing: -0.01em;
+            line-height: 1.1;
+        }
+
+        .dashboard-subtitle {
+            color: var(--text-soft);
+            font-size: 14px;
+            margin-top: 6px;
+            letter-spacing: 0.01em;
+        }
+
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 18px;
+            margin-bottom: 44px;
+        }
+
+        .stat-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 28px 26px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(.22,.68,0,1.2);
+            cursor: default;
+            animation: fadeUp 0.5s ease both;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+            border-color: transparent;
+        }
+
+        .stat-card:nth-child(1) { background: var(--beige-light); border-color: var(--beige); }
+        .stat-card:nth-child(2) { background: var(--sage-light);  border-color: var(--sage);  }
+        .stat-card:nth-child(3) { background: var(--blue-light);  border-color: var(--blue);  }
+        .stat-card:nth-child(4) { background: var(--pink-light);  border-color: var(--pink);  }
+
+        .stat-card-icon {
+            font-size: 28px;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .stat-value {
+            font-family: var(--font-display);
+            font-size: 48px;
+            font-weight: 500;
+            color: var(--brown);
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+
+        .stat-label {
+            font-size: 12.5px;
+            color: var(--text-mid);
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .stat-trend {
+            margin-top: 10px;
+            font-size: 12px;
+            color: var(--text-soft);
+            font-style: italic;
+            font-family: var(--font-display);
+        }
+
+        
+        .resource-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 22px;
+            margin-top: 24px;
+        }
+
+        .resource-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 26px;
+            transition: all 0.32s cubic-bezier(.22,.68,0,1.2);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            animation: fadeUp 0.45s ease both;
+        }
+        .resource-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: var(--radius-lg);
+            background: linear-gradient(135deg, rgba(203,183,166,0.07), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .resource-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-xl);
+            border-color: var(--beige);
+        }
+        .resource-card:hover::before { opacity: 1; }
+
+        .resource-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .resource-category {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 13px;
+            border-radius: 40px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+        }
+
+        .category-food     { background: #fef3c7; color: #7a5600; }
+        .category-clothes  { background: var(--blue-light);  color: #3a5070; }
+        .category-devices  { background: #ede9fe; color: #5b3a8a; }
+        .category-crops    { background: var(--sage-light);  color: #3d5c28; }
+        .category-medicine { background: var(--pink-light);  color: var(--brown); }
+
+        .status-badge {
+            padding: 5px 11px;
+            border-radius: 40px;
+            font-size: 10.5px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+        }
+
+        .status-available { background: var(--sage-light);  color: #3d5c28; }
+        .status-reserved  { background: #fef3c7; color: #7a5600; }
+        .status-completed { background: var(--blue-light);  color: #3a5070; }
+
+        .resource-title {
+            font-family: var(--font-display);
+            font-size: 20px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            color: var(--text-dark);
+            line-height: 1.2;
+        }
+
+        .resource-description {
+            color: var(--text-soft);
+            font-size: 13.5px;
+            line-height: 1.65;
+            margin-bottom: 16px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .resource-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 16px 0;
+        }
+
+        .resource-info {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            color: var(--text-mid);
+            font-size: 13px;
+            margin-bottom: 18px;
+        }
+
+        .resource-info-item {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .resource-info-icon {
+            width: 18px;
+            text-align: center;
+            opacity: 0.7;
+            font-size: 13px;
+        }
+
+        .resource-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .distance-badge {
+            background: var(--blue-light);
+            color: var(--blue);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+       
+        .contact-note {
+            margin-top: 14px;
+            padding: 10px 14px;
+            background: var(--blue-light);
+            border: 1px solid rgba(125,148,181,0.25);
+            border-radius: var(--radius-sm);
+            font-size: 12.5px;
+            color: var(--blue);
+            font-weight: 500;
+        }
+
+      
+        .form-section {
+            max-width: 720px;
+            margin: 0 auto;
+            background: var(--surface);
+            padding: 40px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+        }
+
+        .form-section-title {
+            font-family: var(--font-display);
+            font-size: 28px;
+            font-weight: 400;
+            color: var(--text-dark);
+            margin-bottom: 28px;
+        }
+
+        .form-group { margin-bottom: 22px; }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-mid);
+            font-size: 13px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 13px 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-family: var(--font-body);
+            background: var(--white);
+            color: var(--text-dark);
+            transition: all 0.22s ease;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--beige);
+            box-shadow: 0 0 0 3px rgba(203,183,166,0.2);
+            background: var(--white);
+        }
+        .form-input::placeholder { color: var(--text-soft); }
+        .form-textarea { min-height: 110px; resize: vertical; }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+
+        .location-info {
+            background: var(--blue-light);
+            border: 1px solid rgba(125,148,181,0.3);
+            padding: 14px 18px;
+            border-radius: var(--radius-sm);
+            margin-top: 10px;
+            color: var(--blue);
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--text-soft);
+        }
+        .empty-state-icon { font-size: 60px; margin-bottom: 20px; opacity: 0.35; display: block; }
+        .empty-state-text {
+            font-family: var(--font-display);
+            font-size: 24px;
+            font-weight: 400;
+            margin-bottom: 10px;
+            color: var(--text-mid);
+        }
+        .empty-state-subtext { color: var(--text-soft); font-size: 14px; }
+
+        
+        .chart-container {
+            background: var(--surface);
+            padding: 32px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            margin-top: 32px;
+        }
+
+        .chart-title {
+            font-family: var(--font-display);
+            font-size: 22px;
+            font-weight: 400;
+            margin-bottom: 24px;
+            color: var(--text-dark);
+        }
+
+        
+        .notification {
+            position: fixed;
+            top: 28px;
+            right: 28px;
+            background: var(--white);
+            padding: 18px 22px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-xl);
+            z-index: 2000;
+            animation: slideRight 0.35s cubic-bezier(.22,.68,0,1.2);
+            min-width: 300px;
+            max-width: 380px;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            border: 1px solid var(--border);
+        }
+
+        .notification-success { border-left: 4px solid var(--sage); }
+        .notification-error   { border-left: 4px solid var(--pink); }
+        .notification-warning { border-left: 4px solid #e6c670; }
+        .notification-info    { border-left: 4px solid var(--blue); }
+
+        .notification-icon { font-size: 20px; margin-top: 1px; }
+        .notification-content { flex: 1; }
+        .notification-title { font-weight: 600; color: var(--text-dark); margin-bottom: 3px; font-size: 14px; }
+        .notification-message { font-size: 13px; color: var(--text-soft); line-height: 1.5; }
+
+        
+        .quick-actions {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .quick-action-card {
+            flex: 1;
+            background: var(--surface);
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(.22,.68,0,1.2);
+            text-align: center;
+        }
+        .quick-action-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--beige);
+            background: var(--white);
+        }
+
+        .quick-action-icon { font-size: 32px; margin-bottom: 10px; display: block; }
+        .quick-action-title { font-weight: 600; color: var(--text-dark); margin-bottom: 4px; font-size: 14.5px; }
+        .quick-action-desc  { font-size: 12.5px; color: var(--text-soft); }
+
+        
+        .verification-banner {
+            background: #fef9ec;
+            border: 1px solid #e6c670;
+            border-radius: var(--radius-lg);
+            padding: 28px 32px;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .verification-icon { font-size: 40px; }
+        .verification-title { font-family: var(--font-display); font-size: 22px; font-weight: 500; color: #7a5600; margin-bottom: 6px; }
+        .verification-text  { color: #8a6200; font-size: 14px; line-height: 1.6; }
+
+        
+        .impact-summary {
+            background: var(--sage-light);
+            border: 1px solid var(--sage);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            margin-top: 32px;
+        }
+        .impact-title {
+            font-family: var(--font-display);
+            font-size: 24px;
+            font-weight: 400;
+            color: var(--brown);
+            margin-bottom: 22px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .impact-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 18px;
+        }
+        .impact-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #3d5c28;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .impact-item-icon { font-size: 22px; }
+
+        
+        .filter-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-soft);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .filter-select {
+            padding: 9px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 13.5px;
+            font-family: var(--font-body);
+            font-weight: 500;
+            cursor: pointer;
+            background: var(--white);
+            color: var(--text-dark);
+            transition: border-color 0.2s;
+        }
+        .filter-select:focus { outline: none; border-color: var(--beige); }
+
+       
+        .admin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 22px;
+        }
+
+        .admin-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            transition: all 0.3s cubic-bezier(.22,.68,0,1.2);
+        }
+        .admin-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-4px);
+            border-color: var(--beige);
+        }
+
+        
+        .auth-wrapper {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 24px;
+            background: linear-gradient(160deg, var(--beige-light) 0%, var(--sage-light) 50%, var(--blue-light) 100%);
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 460px;
+            background: rgba(253,250,247,0.88);
+            backdrop-filter: blur(24px);
+            padding: 52px 48px;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            border: 1px solid rgba(203,183,166,0.4);
+            animation: fadeUp 0.5s ease both;
+        }
+
+        .auth-logo {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .auth-logo-mark {
+            width: 56px; height: 56px;
+            background: var(--brown);
+            border-radius: 50% 8px 50% 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 14px;
+            box-shadow: var(--shadow-md);
+        }
+        .auth-title {
+            font-family: var(--font-display);
+            font-size: 32px;
+            font-weight: 400;
+            color: var(--brown);
+            letter-spacing: 0.01em;
+        }
+        .auth-subtitle {
+            font-size: 13.5px;
+            color: var(--text-soft);
+            margin-top: 6px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .auth-toggle {
+            text-align: center;
+            margin: 24px 0;
+            font-size: 13.5px;
+            color: var(--text-soft);
+        }
+        .auth-toggle-link {
+            color: var(--brown);
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+
+        .auth-demo {
+            border-top: 1px solid var(--border);
+            padding-top: 24px;
+            margin-top: 24px;
+        }
+        .auth-demo-label {
+            font-size: 11.5px;
+            color: var(--text-soft);
+            margin-bottom: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .auth-demo-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        .error-msg {
+            background: var(--pink-light);
+            color: var(--brown);
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 20px;
+            font-size: 13.5px;
+            border: 1px solid var(--pink);
+        }
+
+       
+        .section-label {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--text-soft);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+       
+        .no-pending {
+            padding: 44px 30px;
+            text-align: center;
+            color: var(--text-soft);
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            border: 1px dashed var(--border);
+            font-family: var(--font-display);
+            font-size: 17px;
+        }
+
+       
+        .contact-note {
+            margin-top: 14px;
+            padding: 11px 14px;
+            background: #fef9ec;
+            border-radius: var(--radius-sm);
+            font-size: 12.5px;
+            color: #7a5600;
+            font-weight: 500;
+        }
+
+       
+        @keyframes blobFloat {
+            0%,100% { transform: translate(0,0) scale(1); }
+            33%      { transform: translate(30px,-40px) scale(1.06); }
+            66%      { transform: translate(-20px,20px) scale(0.96); }
+        }
+        @keyframes blobFloat2 {
+            0%,100% { transform: translate(0,0) scale(1); }
+            40%      { transform: translate(-40px,30px) scale(1.08); }
+            70%      { transform: translate(20px,-20px) scale(0.94); }
+        }
+        @keyframes marqueeScroll {
+            from { transform: translateX(0); }
+            to   { transform: translateX(-50%); }
+        }
+        @keyframes heroReveal {
+            from { opacity: 0; transform: translateY(32px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes counterUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes lineGrow {
+            from { width: 0; }
+            to   { width: 60px; }
+        }
+
+        .landing-page {
+            min-height: 100vh;
+            background: var(--white);
+            overflow-x: hidden;
+        }
+
+        
+        .land-nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 200;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 60px;
+            background: rgba(253,250,247,0.78);
+            backdrop-filter: blur(22px) saturate(160%);
+            -webkit-backdrop-filter: blur(22px) saturate(160%);
+            border-bottom: 1px solid rgba(203,183,166,0.28);
+            transition: padding 0.3s;
+        }
+        .land-nav-logo {
+            font-family: var(--font-display);
+            font-size: 22px;
+            font-weight: 500;
+            color: var(--brown);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: default;
+        }
+        .land-nav-logo-mark {
+            width: 32px; height: 32px;
+            background: var(--brown);
+            border-radius: 50% 6px 50% 6px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 15px;
+        }
+        .land-nav-links {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        
+        .land-hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            padding: 120px 60px 80px;
+        }
+
+        .land-hero-bg {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(160deg, #f5efe8 0%, #eef2ea 40%, #e8edf5 100%);
+            z-index: 0;
+        }
+
+       
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(70px);
+            opacity: 0.55;
+            pointer-events: none;
+        }
+        .blob-1 {
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, #CBB7A6 0%, transparent 70%);
+            top: -100px; right: -100px;
+            animation: blobFloat 14s ease-in-out infinite;
+        }
+        .blob-2 {
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, #B7C89A 0%, transparent 70%);
+            bottom: -80px; left: -80px;
+            animation: blobFloat2 18s ease-in-out infinite;
+        }
+        .blob-3 {
+            width: 360px; height: 360px;
+            background: radial-gradient(circle, #7D94B5 0%, transparent 70%);
+            top: 30%; left: 40%;
+            animation: blobFloat 22s ease-in-out infinite reverse;
+            opacity: 0.3;
+        }
+
+        
+        .land-hero-bg::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .land-hero-inner {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+        }
+
+        .land-hero-left { }
+
+        .land-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(183,200,154,0.3);
+            border: 1px solid rgba(183,200,154,0.5);
+            color: #3d5c28;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 28px;
+            animation: heroReveal 0.6s ease both;
+        }
+        .land-eyebrow-dot {
+            width: 6px; height: 6px;
+            background: var(--sage);
+            border-radius: 50%;
+            animation: blobFloat 2s ease-in-out infinite;
+        }
+
+        .land-hero-title {
+            font-family: var(--font-display);
+            font-size: clamp(52px, 6vw, 86px);
+            font-weight: 300;
+            line-height: 1.0;
+            letter-spacing: -0.02em;
+            color: var(--text-dark);
+            margin-bottom: 28px;
+            animation: heroReveal 0.7s 0.08s ease both;
+        }
+        .land-hero-title em {
+            font-style: italic;
+            color: var(--brown);
+        }
+        .land-hero-title .title-line-accent {
+            display: inline-block;
+            position: relative;
+        }
+        .land-hero-title .title-line-accent::after {
+            content: '';
+            position: absolute;
+            bottom: 4px; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--sage), var(--beige));
+            border-radius: 2px;
+            animation: lineGrow 1s 0.8s ease both;
+        }
+
+        .land-hero-desc {
+            font-size: 17px;
+            line-height: 1.75;
+            color: var(--text-mid);
+            max-width: 460px;
+            margin-bottom: 44px;
+            animation: heroReveal 0.7s 0.16s ease both;
+        }
+
+        .land-hero-actions {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            animation: heroReveal 0.7s 0.24s ease both;
+        }
+
+        .btn-land-primary {
+            padding: 15px 34px;
+            background: var(--brown);
+            color: var(--white);
+            border: none;
+            border-radius: 50px;
+            font-family: var(--font-body);
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.28s cubic-bezier(.22,.68,0,1.2);
+            box-shadow: 0 6px 24px rgba(112,63,55,0.28);
+            letter-spacing: 0.01em;
+        }
+        .btn-land-primary:hover {
+            background: var(--brown-dark);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 36px rgba(112,63,55,0.36);
+        }
+
+        .btn-land-ghost {
+            padding: 15px 28px;
+            background: transparent;
+            color: var(--text-mid);
+            border: 1.5px solid var(--border);
+            border-radius: 50px;
+            font-family: var(--font-body);
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .btn-land-ghost:hover {
+            background: var(--beige-light);
+            border-color: var(--beige);
+            color: var(--brown);
+            transform: translateY(-2px);
+        }
+        .btn-land-ghost-arrow {
+            transition: transform 0.25s;
+        }
+        .btn-land-ghost:hover .btn-land-ghost-arrow { transform: translateX(4px); }
+
+        
+        .land-hero-right {
+            position: relative;
+            animation: heroReveal 0.8s 0.2s ease both;
+        }
+
+        .hero-visual-frame {
+            position: relative;
+            border-radius: 32px;
+            overflow: hidden;
+            background: var(--white);
+            box-shadow: var(--shadow-xl), 0 0 0 1px rgba(203,183,166,0.3);
+            padding: 32px;
+        }
+
+        .hero-card-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .hero-mini-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            transition: transform 0.3s ease;
+        }
+        .hero-mini-card:hover { transform: translateX(6px); }
+        .hero-mini-card:nth-child(2) { margin-left: 20px; }
+        .hero-mini-card:nth-child(3) { margin-left: 40px; }
+
+        .hero-mini-icon {
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        .hmi-food    { background: #fef3c7; }
+        .hmi-clothes { background: var(--blue-light); }
+        .hmi-med     { background: var(--pink-light); }
+
+        .hero-mini-info { flex: 1; min-width: 0; }
+        .hero-mini-title { font-weight: 600; font-size: 14px; color: var(--text-dark); margin-bottom: 3px; }
+        .hero-mini-sub   { font-size: 12px; color: var(--text-soft); }
+
+        .hero-mini-badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+            flex-shrink: 0;
+        }
+        .hmb-available { background: var(--sage-light); color: #3d5c28; }
+        .hmb-reserved  { background: #fef3c7; color: #7a5600; }
+        .hmb-done      { background: var(--blue-light); color: #3a5070; }
+
+        .hero-visual-footer {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .hero-stat-mini {
+            text-align: center;
+        }
+        .hero-stat-mini-val {
+            font-family: var(--font-display);
+            font-size: 28px;
+            font-weight: 500;
+            color: var(--brown);
+        }
+        .hero-stat-mini-label {
+            font-size: 11px;
+            color: var(--text-soft);
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            margin-top: 2px;
+        }
+
+        
+        .hero-float-badge {
+            position: absolute;
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 12px 16px;
+            box-shadow: var(--shadow-lg);
+            display: flex; align-items: center; gap: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dark);
+            white-space: nowrap;
+            animation: blobFloat 8s ease-in-out infinite;
+        }
+        .hfb-1 { top: -20px; right: -24px; animation-delay: 0s; }
+        .hfb-2 { bottom: -20px; left: -24px; animation-delay: -4s; }
+        .hfb-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .hfb-dot-green  { background: var(--sage); }
+        .hfb-dot-orange { background: #e6a85a; }
+
+        
+        .land-ticker {
+            background: var(--brown);
+            padding: 14px 0;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .land-ticker-inner {
+            display: inline-flex;
+            animation: marqueeScroll 28s linear infinite;
+        }
+        .land-ticker-item {
+            font-family: var(--font-display);
+            font-size: 18px;
+            font-weight: 300;
+            color: rgba(253,250,247,0.75);
+            padding: 0 36px;
+            display: inline-flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .land-ticker-item span { color: var(--beige); }
+        .ticker-dot { width: 5px; height: 5px; background: var(--beige); border-radius: 50%; opacity: 0.5; }
+
+       
+        .land-section {
+            padding: 100px 60px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .land-section-eyebrow {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--text-soft);
+            margin-bottom: 14px;
+        }
+
+        .land-section-title {
+            font-family: var(--font-display);
+            font-size: clamp(36px, 4vw, 54px);
+            font-weight: 400;
+            color: var(--text-dark);
+            line-height: 1.1;
+            margin-bottom: 60px;
+            max-width: 520px;
+        }
+        .land-section-title em {
+            font-style: italic;
+            color: var(--brown);
+        }
+
+        .how-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+        }
+
+        .how-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            padding: 36px 32px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.35s cubic-bezier(.22,.68,0,1.2);
+        }
+        .how-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+        }
+        .how-card:nth-child(1)::before { background: linear-gradient(90deg, var(--beige), var(--pink)); }
+        .how-card:nth-child(2)::before { background: linear-gradient(90deg, var(--sage), var(--blue)); }
+        .how-card:nth-child(3)::before { background: linear-gradient(90deg, var(--blue), var(--beige)); }
+
+        .how-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-xl);
+            border-color: transparent;
+        }
+
+        .how-number {
+            font-family: var(--font-display);
+            font-size: 72px;
+            font-weight: 300;
+            color: var(--border);
+            line-height: 1;
+            margin-bottom: 16px;
+            letter-spacing: -0.04em;
+        }
+
+        .how-icon {
+            font-size: 36px;
+            margin-bottom: 18px;
+            display: block;
+        }
+
+        .how-title {
+            font-family: var(--font-display);
+            font-size: 24px;
+            font-weight: 500;
+            color: var(--text-dark);
+            margin-bottom: 12px;
+        }
+
+        .how-desc {
+            font-size: 14.5px;
+            line-height: 1.75;
+            color: var(--text-soft);
+        }
+
+       
+        .land-impact-strip {
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            padding: 70px 60px;
+        }
+
+        .land-impact-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 40px;
+            text-align: center;
+        }
+
+        .land-impact-num {
+            font-family: var(--font-display);
+            font-size: 58px;
+            font-weight: 300;
+            color: var(--brown);
+            line-height: 1;
+            letter-spacing: -0.03em;
+            animation: counterUp 0.7s ease both;
+        }
+        .land-impact-label {
+            font-size: 13px;
+            color: var(--text-soft);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-top: 8px;
+            font-weight: 500;
+        }
+        .land-impact-divider {
+            width: 1px;
+            background: var(--border);
+            align-self: stretch;
+        }
+
+        
+        .land-roles-section {
+            padding: 100px 60px;
+            background: var(--beige-light);
+        }
+
+        .land-roles-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .land-roles-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-top: 60px;
+        }
+
+        .role-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            padding: 40px 36px;
+            cursor: pointer;
+            transition: all 0.35s cubic-bezier(.22,.68,0,1.2);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .role-card:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--shadow-xl);
+            border-color: var(--beige);
+        }
+        .role-card:hover .role-cta { opacity: 1; transform: translateY(0); }
+
+        .role-emoji { font-size: 52px; margin-bottom: 20px; display: block; }
+
+        .role-title {
+            font-family: var(--font-display);
+            font-size: 28px;
+            font-weight: 500;
+            color: var(--text-dark);
+            margin-bottom: 14px;
+        }
+
+        .role-desc {
+            font-size: 14.5px;
+            line-height: 1.75;
+            color: var(--text-soft);
+            margin-bottom: 24px;
+        }
+
+        .role-pill-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 28px;
+        }
+
+        .role-pill {
+            background: var(--beige-light);
+            color: var(--text-mid);
+            padding: 5px 13px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            border: 1px solid var(--border);
+        }
+
+        .role-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13.5px;
+            font-weight: 600;
+            color: var(--brown);
+            opacity: 0;
+            transform: translateY(8px);
+            transition: all 0.3s ease;
+        }
+
+        
+        .land-quote-section {
+            padding: 100px 60px;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+        }
+
+        .land-quote-visual {
+            position: relative;
+        }
+        .land-quote-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+        .land-quote-tile {
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+        .lqt-1 { background: var(--beige-light); aspect-ratio: 1; }
+        .lqt-2 { background: var(--sage-light); aspect-ratio: 1; grid-row: span 2; }
+        .lqt-3 { background: var(--blue-light); aspect-ratio: 1; }
+
+        .lqt-emoji { font-size: 40px; margin-bottom: 12px; }
+        .lqt-text  { font-family: var(--font-display); font-size: 18px; color: var(--text-dark); line-height: 1.3; }
+
+        .land-quote-text {
+            font-family: var(--font-display);
+            font-size: clamp(26px, 3vw, 38px);
+            font-weight: 300;
+            line-height: 1.4;
+            color: var(--text-dark);
+            margin-bottom: 32px;
+        }
+        .land-quote-text em { font-style: italic; color: var(--brown); }
+
+        .land-quote-source {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .land-quote-avatar {
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            background: var(--beige);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+        }
+        .land-quote-name  { font-weight: 600; font-size: 15px; color: var(--text-dark); }
+        .land-quote-role  { font-size: 13px; color: var(--text-soft); }
+
+       
+        .land-cta-banner {
+            margin: 0 60px 80px;
+            background: var(--brown);
+            border-radius: var(--radius-xl);
+            padding: 80px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        .land-cta-banner::before {
+            content: '';
+            position: absolute;
+            top: -100px; right: -100px;
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(203,183,166,0.15) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .land-cta-banner::after {
+            content: '';
+            position: absolute;
+            bottom: -80px; left: -80px;
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(183,200,154,0.12) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .land-cta-title {
+            font-family: var(--font-display);
+            font-size: clamp(32px, 3.5vw, 48px);
+            font-weight: 300;
+            color: var(--white);
+            line-height: 1.15;
+        }
+        .land-cta-title em { font-style: italic; color: var(--beige); }
+        .land-cta-sub {
+            font-size: 15px;
+            color: rgba(253,250,247,0.6);
+            margin-top: 12px;
+        }
+
+        .land-cta-actions { display: flex; gap: 14px; align-items: center; flex-shrink: 0; }
+
+        .btn-land-white {
+            padding: 15px 34px;
+            background: var(--white);
+            color: var(--brown);
+            border: none;
+            border-radius: 50px;
+            font-family: var(--font-body);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.28s cubic-bezier(.22,.68,0,1.2);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            white-space: nowrap;
+        }
+        .btn-land-white:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .btn-land-outline-white {
+            padding: 14px 28px;
+            background: transparent;
+            color: rgba(253,250,247,0.8);
+            border: 1.5px solid rgba(253,250,247,0.3);
+            border-radius: 50px;
+            font-family: var(--font-body);
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            white-space: nowrap;
+        }
+        .btn-land-outline-white:hover {
+            background: rgba(253,250,247,0.1);
+            border-color: rgba(253,250,247,0.6);
+            color: var(--white);
+        }
+
+
+        .land-footer {
+            background: var(--text-dark);
+            padding: 50px 60px 36px;
+        }
+        .land-footer-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 28px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            margin-bottom: 24px;
+        }
+        .land-footer-logo {
+            font-family: var(--font-display);
+            font-size: 20px;
+            color: rgba(253,250,247,0.7);
+        }
+        .land-footer-copy {
+            font-size: 13px;
+            color: rgba(203,183,166,0.45);
+            text-align: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+  
+        @media (max-width: 1024px) {
+            .land-hero-inner { grid-template-columns: 1fr; gap: 60px; }
+            .land-hero-right { max-width: 480px; }
+            .how-grid { grid-template-columns: 1fr; max-width: 500px; }
+            .land-roles-grid { grid-template-columns: 1fr; max-width: 480px; }
+            .land-quote-section { grid-template-columns: 1fr; }
+            .land-impact-inner { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 768px) {
+            .land-nav { padding: 16px 24px; }
+            .land-hero { padding: 100px 24px 60px; }
+            .land-section { padding: 70px 24px; }
+            .land-impact-strip { padding: 60px 24px; }
+            .land-roles-section { padding: 70px 24px; }
+            .land-quote-section { padding: 70px 24px; }
+            .land-cta-banner { margin: 0 24px 60px; padding: 50px 32px; flex-direction: column; text-align: center; }
+            .land-cta-actions { flex-direction: column; width: 100%; }
+            .land-footer { padding: 40px 24px 28px; }
+            .land-impact-inner { grid-template-columns: repeat(2, 1fr); }
+            .hfb-1, .hfb-2 { display: none; }
+        }
+
+       
+        @media (max-width: 900px) {
+            .header { padding: 16px 24px; margin: 0 -24px 28px; }
+            .content { padding: 30px 28px; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 680px) {
+            .header { flex-direction: column; gap: 16px; align-items: flex-start; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .resource-grid { grid-template-columns: 1fr; }
+            .form-row { grid-template-columns: 1fr; }
+            .quick-actions { flex-direction: column; }
+            .content { padding: 24px 20px; border-radius: var(--radius-lg); }
+            .tab-container { width: 100%; }
+            .dashboard-title { font-size: 30px; }
+            .auth-card { padding: 36px 28px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+
+    <script>
+   
+        const firebaseConfig = {
+            apiKey:            "AIzaSyDRmon9b9hKiS_9T2C3slaK870lk3xp_60",
+            authDomain:        "resourcebridge-91fe2.firebaseapp.com",
+            projectId:         "resourcebridge-91fe2",
+            storageBucket:     "resourcebridge-91fe2.firebasestorage.app",
+            messagingSenderId: "822700022563",
+            appId:             "1:822700022563:web:c4be950b7bef9ea5780a96",
+            measurementId:     "G-L2NNJZ995X"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+
+        const fbAuth    = firebase.auth();
+        const fbDB      = firebase.firestore();
+        const fbStorage = firebase.storage();
+
+        console.log("[ResourceBridge] Firebase initialised ✓");
+
+        window.__rulesOk = null; 
+
+        async function probeFirestoreRules(uid) {
+            if (window.__rulesOk !== null) return; 
+            try {
+                
+                await fbDB.collection("users").doc(uid).get();
+               
+                const testRef = fbDB.collection("_rules_probe").doc(uid);
+                try {
+                    await testRef.set({ probe: true, ts: firebase.firestore.FieldValue.serverTimestamp() });
+                    await testRef.delete();
+                    window.__rulesOk = true;
+                    console.log("[Rules] Firestore write probe: OK ✓");
+                } catch (writeErr) {
+                    // Write failed — check if it is permission-denied
+                    if (writeErr.code === 'permission-denied') {
+                        window.__rulesOk = false;
+                        console.warn("[Rules] Firestore write BLOCKED by security rules. NGO accept will fail.");
+                    } else {
+                        window.__rulesOk = true; // different error, rules probably fine
+                    }
+                }
+            } catch(e) { /* ignore probe errors silently */ }
+        }
+
+        /* ─────────────────────────────────────────────────────────────────
+           2. FIRESTORE HELPERS  (all async, all wrapped in try/catch)
+        ───────────────────────────────────────────────────────────────── */
+
+        // ── Users ──────────────────────────────────────────────────────────
+
+        async function fbGetUser(uid) {
+            try {
+                const snap = await fbDB.collection("users").doc(uid).get();
+                if (!snap.exists) { console.warn("[FB] User doc not found:", uid); return null; }
+                return { uid: snap.id, ...snap.data() };
+            } catch (e) { console.error("[FB] fbGetUser:", e.message); return null; }
+        }
+
+        async function fbCreateUser(uid, data) {
+            try {
+                await fbDB.collection("users").doc(uid).set({
+                    ...data,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                console.log("[FB] User profile created:", uid);
+            } catch (e) { console.error("[FB] fbCreateUser:", e.message); throw e; }
+        }
+
+        async function fbUpdateUser(uid, updates) {
+            try {
+                await fbDB.collection("users").doc(uid).update(updates);
+                console.log("[FB] User updated:", uid);
+            } catch (e) { console.error("[FB] fbUpdateUser:", e.message); throw e; }
+        }
+
+        // (fbListenUsers is defined below alongside fbListenAllRequests)
+
+        // ── Resources ──────────────────────────────────────────────────────
+
+        /**
+         * Add resource doc, then optionally upload an image to Storage.
+         * Returns the new Firestore document ID.
+         */
+        async function fbAddResource(data, imageFile) {
+            try {
+                // 1. Write the doc first (status AVAILABLE, blank imageURL)
+                const ref = await fbDB.collection("resources").add({
+                    ...data,
+                    imageURL:  "",
+                    status:    "AVAILABLE",
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                console.log("[FB] Resource created:", ref.id);
+
+                // 2. Upload image if provided
+                if (imageFile) {
+                    try {
+                        const imgRef  = fbStorage.ref(`resources_images/${ref.id}`);
+                        const snap    = await imgRef.put(imageFile);
+                        const imgURL  = await snap.ref.getDownloadURL();
+                        await ref.update({ imageURL: imgURL });
+                        console.log("[FB] Image uploaded:", imgURL);
+                    } catch (imgErr) {
+                        console.warn("[FB] Image upload failed (resource saved without image):", imgErr.message);
+                    }
+                }
+
+                return ref.id;
+            } catch (e) { console.error("[FB] fbAddResource:", e.message); throw e; }
+        }
+
+        async function fbUpdateResource(id, updates) {
+            try {
+                await fbDB.collection("resources").doc(id).update(updates);
+                console.log("[FB] Resource updated:", id, updates);
+            } catch (e) { console.error("[FB] fbUpdateResource:", e.message); throw e; }
+        }
+
+        // Release a RESERVED resource back to AVAILABLE and delete the NGO's request doc
+        async function fbReleaseResource(resourceId, ngoId) {
+            try {
+                // 1. Set resource back to AVAILABLE
+                await fbDB.collection("resources").doc(resourceId).update({
+                    status: "AVAILABLE",
+                    assignedNGO: firebase.firestore.FieldValue.delete()
+                });
+                // 2. Delete the matching request doc created by this NGO
+                const reqSnap = await fbDB.collection("requests")
+                    .where("resourceId", "==", resourceId)
+                    .where("ngoId", "==", ngoId)
+                    .get();
+                const batch = fbDB.batch();
+                reqSnap.docs.forEach(d => batch.delete(d.ref));
+                await batch.commit();
+                console.log("[FB] Resource released back to AVAILABLE:", resourceId);
+            } catch (e) { console.error("[FB] fbReleaseResource:", e.message); throw e; }
+        }
+
+        async function fbDeleteResource(id) {
+            try {
+                await fbDB.collection("resources").doc(id).delete();
+                console.log("[FB] Resource deleted:", id);
+            } catch (e) { console.error("[FB] fbDeleteResource:", e.message); throw e; }
+        }
+
+        // ── Client-side sort helper (avoids composite index requirements) ───
+        // Firestore serverTimestamp() Timestamps have .toMillis(); plain Date
+        // strings also work. Falls back gracefully if field is missing.
+        function _byCreatedAtDesc(a, b) {
+            const toMs = v => {
+                if (!v) return 0;
+                if (typeof v.toMillis === 'function') return v.toMillis();
+                return new Date(v).getTime() || 0;
+            };
+            return toMs(b.createdAt) - toMs(a.createdAt);
+        }
+
+        // Real-time: donor's own resources  — NO orderBy (no composite index needed)
+        function fbListenDonorResources(donorId, callback) {
+            console.log("[FB] Attaching donor resources listener for uid:", donorId);
+            return fbDB.collection("resources")
+                .where("donorId", "==", donorId)
+                .onSnapshot(
+                    snap => {
+                        const docs = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort(_byCreatedAtDesc);
+                        console.log("[FB] Donor resources snapshot — count:", docs.length);
+                        callback(docs);
+                    },
+                    e => console.error("[FB] fbListenDonorResources error:", e.code, e.message)
+                );
+        }
+
+        // Real-time: ALL AVAILABLE resources (NGO browse)  — NO orderBy
+        function fbListenAvailableResources(callback) {
+            console.log("[FB] Attaching available-resources listener");
+            return fbDB.collection("resources")
+                .where("status", "==", "AVAILABLE")
+                .onSnapshot(
+                    snap => {
+                        const docs = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort(_byCreatedAtDesc);
+                        console.log("[FB] Available resources snapshot — count:", docs.length);
+                        callback(docs);
+                    },
+                    e => console.error("[FB] fbListenAvailableResources error:", e.code, e.message)
+                );
+        }
+
+        // Real-time: ALL resources (Impact Dashboard + Admin)  — NO orderBy
+        function fbListenAllResources(callback) {
+            console.log("[FB] Attaching all-resources listener");
+            return fbDB.collection("resources")
+                .onSnapshot(
+                    snap => {
+                        const docs = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort(_byCreatedAtDesc);
+                        console.log("[FB] All resources snapshot — count:", docs.length);
+                        callback(docs);
+                    },
+                    e => console.error("[FB] fbListenAllResources error:", e.code, e.message)
+                );
+        }
+
+        // ── Requests ───────────────────────────────────────────────────────
+
+        async function fbAddRequest(data) {
+            try {
+                const ref = await fbDB.collection("requests").add({
+                    ...data,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                console.log("[FB] Request created:", ref.id);
+                return ref.id;
+            } catch (e) { console.error("[FB] fbAddRequest:", e.message); throw e; }
+        }
+
+        // Real-time: NGO's own accepted requests  — NO orderBy (no composite index needed)
+        function fbListenNGORequests(ngoId, callback) {
+            console.log("[FB] Attaching NGO requests listener for uid:", ngoId);
+            return fbDB.collection("requests")
+                .where("ngoId", "==", ngoId)
+                .onSnapshot(
+                    snap => {
+                        const docs = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort(_byCreatedAtDesc);
+                        console.log("[FB] NGO requests snapshot — count:", docs.length);
+                        callback(docs);
+                    },
+                    e => console.error("[FB] fbListenNGORequests error:", e.code, e.message)
+                );
+        }
+
+        // Real-time: ALL requests (Admin panel)
+        function fbListenAllRequests(callback) {
+            console.log("[FB] Attaching all-requests listener");
+            return fbDB.collection("requests")
+                .onSnapshot(
+                    snap => {
+                        const docs = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort(_byCreatedAtDesc);
+                        console.log("[FB] All requests snapshot — count:", docs.length);
+                        callback(docs);
+                    },
+                    e => console.error("[FB] fbListenAllRequests error:", e.code, e.message)
+                );
+        }
+
+        // Real-time: ALL users (Admin panel) — enhanced with debug logs
+        function fbListenUsers(callback) {
+            console.log("[FB] Attaching users listener");
+            return fbDB.collection("users").onSnapshot(
+                snap => {
+                    const docs = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+                    console.log("[FB] Users snapshot — count:", docs.length);
+                    callback(docs);
+                },
+                e => console.error("[FB] fbListenUsers error:", e.code, e.message)
+            );
+        }
+
+        /* ─────────────────────────────────────────────────────────────────
+           3. GLOBAL AUTH STATE  –  resolved BEFORE React boots
+              Stores the resolved Firestore profile in window.__fbUser.
+              Uses a retry loop so a slow Firestore read never stalls the app.
+        ───────────────────────────────────────────────────────────────── */
+        window.__fbUser       = null;
+        window.__fbAuthReady  = false;
+        window.__fbAuthCallback = null;
+        // When set to true, onAuthStateChanged will still update __fbUser but
+        // will NOT fire __fbAuthCallback or sign out on missing profile.
+        // Used by fbEnsureDemoAccount to prevent race-condition sign-outs
+        // while it is in the middle of creating a new account + Firestore doc.
+        window.__fbSkipAuthCallback = false;
+
+        fbAuth.onAuthStateChanged(async (firebaseUser) => {
+            console.log("[FB] onAuthStateChanged fired — user:", firebaseUser ? firebaseUser.uid : "null",
+                        "| skipCallback:", window.__fbSkipAuthCallback);
+
+            // If a demo/signup flow is actively managing auth, skip all side-effects.
+            // The calling code is responsible for setting __fbUser and calling __fbAuthCallback.
+            if (window.__fbSkipAuthCallback) {
+                console.log("[FB] onAuthStateChanged — skipped (demo/signup flow in progress)");
+                window.__fbAuthReady = true;
+                return;
+            }
+
+            if (firebaseUser) {
+                // Retry up to 5 times with increasing back-off.
+                // Handles cold-start Firestore latency and sign-up timing.
+                let profile = null;
+                for (let attempt = 1; attempt <= 5; attempt++) {
+                    profile = await fbGetUser(firebaseUser.uid);
+                    if (profile) break;
+                    console.warn(`[FB] Profile fetch attempt ${attempt} returned null — retrying…`);
+                    await new Promise(r => setTimeout(r, 400 * attempt));
+                }
+                if (!profile) {
+                    // Firestore doc genuinely missing — sign user out cleanly
+                    console.error("[FB] No Firestore profile after 5 attempts — signing out");
+                    await fbAuth.signOut();
+                    window.__fbUser = null;
+                } else {
+                    window.__fbUser = profile;
+                    console.log("[FB] Auth profile resolved:", profile.uid, "role:", profile.role);
+                    // Run rules probe in background (non-blocking)
+                    probeFirestoreRules(profile.uid).catch(() => {});
+                }
+            } else {
+                window.__fbUser = null;
+            }
+
+            window.__fbAuthReady = true;
+
+            if (typeof window.__fbAuthCallback === "function") {
+                window.__fbAuthCallback(window.__fbUser);
+            }
+        });
+    </script>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        /* ─────────────────────────────────────────────────────────────────
+           Haversine distance (unchanged utility)
+        ───────────────────────────────────────────────────────────────── */
+
+        function getDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371, dLat = (lat2 - lat1) * Math.PI / 180, dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+
+        function formatDate(value) {
+            if (!value) return '—';
+            // Firestore Timestamp object has a toDate() method
+            const d = value?.toDate ? value.toDate() : new Date(value);
+            if (isNaN(d.getTime())) return '—';
+            return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Notification
+        function Notification({ message, type, onClose }) {
+            useEffect(() => { const t = setTimeout(onClose, 4200); return () => clearTimeout(t); }, []);
+            const icons = { success: '✓', error: '✕', warning: '!', info: 'i' };
+            const titles = { success: 'Done!', error: 'Error', warning: 'Notice', info: 'Info' };
+            return (
+                <div className={`notification notification-${type}`}>
+                    <div className="notification-icon">{icons[type] || icons.info}</div>
+                    <div className="notification-content">
+                        <div className="notification-title">{titles[type] || 'Notice'}</div>
+                        <div className="notification-message">{message}</div>
+                    </div>
+                </div>
+            );
+        }
+
+        /* ─────────────────────────────────────────────────────────────────
+           DEMO ACCOUNT DEFINITIONS
+           These are the three seed accounts used by the demo buttons.
+           If they don't exist in Firebase Auth + Firestore yet, the
+           fbEnsureDemo* helpers below create them automatically.
+        ───────────────────────────────────────────────────────────────── */
+        const DEMO_ACCOUNTS = {
+            donor: {
+                email:     'rajesh@example.com',
+                password:  'Demo@1234',
+                name:      'Rajesh Mehta',
+                role:      'donor',
+                phone:     '+91 9876543210',
+                latitude:  19.0760,
+                longitude: 72.8777,
+                verified:  true
+            },
+            ngo: {
+                email:     'hope@foundation.org',
+                password:  'Demo@1234',
+                name:      'Hope Foundation',
+                role:      'ngo',
+                phone:     '+91 9988776655',
+                latitude:  19.0330,
+                longitude: 73.0297,
+                verified:  true   // pre-verified so the NGO can browse immediately in demo
+            },
+            admin: {
+                email:     'admin@resourcebridge.com',
+                password:  'Admin@1234',
+                name:      'Platform Admin',
+                role:      'admin',
+                phone:     '+91 9000000001',
+                latitude:  19.0760,
+                longitude: 72.8777,
+                verified:  true
+            }
+        };
+
+        /**
+         * fbEnsureDemoAccount
+         * Attempts to sign in with the demo credentials.
+         * If auth/user-not-found → creates the Firebase Auth user AND the
+         * Firestore profile document so the demo works from scratch.
+         * Returns the full Firestore profile object.
+         */
+        async function fbEnsureDemoAccount(key) {
+            const acct = DEMO_ACCOUNTS[key];
+            console.log(`[Demo] Ensuring demo account: ${key} (${acct.email})`);
+
+            // Block onAuthStateChanged from interfering while we manage the auth flow.
+            // Without this guard, creating a new Auth account fires onAuthStateChanged
+            // BEFORE the Firestore doc is written, causing the handler to sign the user out.
+            window.__fbSkipAuthCallback = true;
+
+            try {
+                // ── 1. Sign out any different currently-active session ──────────────
+                const currentUser = fbAuth.currentUser;
+                if (currentUser && currentUser.email !== acct.email) {
+                    console.log(`[Demo] Signing out current user (${currentUser.email}) before demo switch`);
+                    await fbAuth.signOut();
+                }
+
+                // ── 2. Try to sign in with demo credentials ─────────────────────────
+                let uid = null;
+                try {
+                    const cred = await fbAuth.signInWithEmailAndPassword(acct.email, acct.password);
+                    uid = cred.user.uid;
+                    console.log(`[Demo] Sign-in success for ${key}:`, uid);
+                } catch (signInErr) {
+                    const notFound = [
+                        'auth/user-not-found',
+                        'auth/invalid-credential',
+                        'auth/wrong-password',
+                        'auth/invalid-login-credentials'
+                    ];
+                    if (notFound.includes(signInErr.code)) {
+                        // ── 3. Account doesn't exist yet — create it ────────────────
+                        console.log(`[Demo] Account not found for ${key} — creating fresh account`);
+                        try {
+                            const newCred = await fbAuth.createUserWithEmailAndPassword(acct.email, acct.password);
+                            uid = newCred.user.uid;
+                            console.log(`[Demo] New Auth account created — uid: ${uid}`);
+                        } catch (createErr) {
+                            console.error(`[Demo] Failed to create ${key} auth account:`, createErr.code, createErr.message);
+                            throw new Error(`Could not create demo ${key} account: ${createErr.message}`);
+                        }
+                    } else {
+                        console.error(`[Demo] Unexpected sign-in error for ${key}:`, signInErr.code, signInErr.message);
+                        throw signInErr;
+                    }
+                }
+
+                // ── 4. Fetch Firestore profile with retry, or create it ─────────────
+                let profile = null;
+                for (let attempt = 1; attempt <= 5; attempt++) {
+                    profile = await fbGetUser(uid);
+                    if (profile) break;
+                    console.warn(`[Demo] Firestore profile not found (attempt ${attempt}) — waiting…`);
+                    await new Promise(r => setTimeout(r, 300 * attempt));
+                }
+
+                if (!profile) {
+                    console.log(`[Demo] Creating Firestore doc for ${key}`);
+                    const profileData = {
+                        uid,
+                        name:      acct.name,
+                        email:     acct.email,
+                        role:      acct.role,
+                        phone:     acct.phone,
+                        latitude:  acct.latitude,
+                        longitude: acct.longitude,
+                        verified:  acct.verified
+                    };
+                    await fbCreateUser(uid, profileData);
+                    profile = { uid, ...profileData };
+                    console.log(`[Demo] ✓ Firestore doc created — role: ${acct.role}`);
+                } else {
+                    // Self-heal: ensure role/verified fields are correct (repairs corrupt docs)
+                    if (profile.role !== acct.role || profile.verified !== acct.verified) {
+                        console.warn(`[Demo] Role/verified mismatch — repairing Firestore doc`);
+                        await fbUpdateUser(uid, { role: acct.role, verified: acct.verified, name: acct.name });
+                        profile = { ...profile, role: acct.role, verified: acct.verified, name: acct.name };
+                    }
+                }
+
+                console.log(`[Demo] ✓ Profile ready — role: ${profile.role}, verified: ${profile.verified}`);
+
+                // ── 5. Commit to global state ───────────────────────────────────────
+                window.__fbUser      = profile;
+                window.__fbAuthReady = true;
+                return profile;
+
+            } finally {
+                // Always restore the flag so future normal auth events work correctly
+                window.__fbSkipAuthCallback = false;
+            }
+        }
+
+                // Auth  ── wired to real Firebase Authentication with full demo support
+        function Auth({ onLogin }) {
+            const [isLogin, setIsLogin] = useState(true);
+            const [email, setEmail] = useState('');
+            const [password, setPassword] = useState('');
+            const [name, setName] = useState('');
+            const [role, setRole] = useState('donor');
+            const [phone, setPhone] = useState('');
+            const [location, setLocation] = useState({ latitude: 19.0760, longitude: 72.8777 });
+            const [error, setError] = useState('');
+            const [loading, setLoading] = useState(false);
+            const [demoLoading, setDemoLoading] = useState(null); // 'donor'|'ngo'|'admin'|null
+
+            useEffect(() => {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (p) => setLocation({ latitude: p.coords.latitude, longitude: p.coords.longitude }),
+                        () => {}
+                    );
+                }
+            }, []);
+
+            /* ── Readable Firebase error messages ── */
+            const friendlyError = (err) => {
+                const map = {
+                    'auth/user-not-found':       'No account found with this email.',
+                    'auth/invalid-credential':   'Incorrect email or password.',
+                    'auth/wrong-password':        'Incorrect password.',
+                    'auth/email-already-in-use': 'An account with this email already exists.',
+                    'auth/weak-password':         'Password must be at least 6 characters.',
+                    'auth/invalid-email':         'Please enter a valid email address.',
+                    'auth/too-many-requests':     'Too many attempts. Please wait a moment and try again.',
+                    'auth/network-request-failed':'Network error. Please check your connection.'
+                };
+                return map[err.code] || err.message;
+            };
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setError('');
+                setLoading(true);
+                try {
+                    if (isLogin) {
+                        // ── SIGN IN ──────────────────────────────────────
+                        console.log("[Auth] Attempting sign-in for:", email);
+                        const cred    = await fbAuth.signInWithEmailAndPassword(email, password);
+                        const profile = await fbGetUser(cred.user.uid);
+                        if (!profile) throw new Error("User profile not found. Please contact support.");
+                        console.log("[Auth] Sign-in success — role:", profile.role, "uid:", profile.uid);
+                        window.__fbUser = profile;
+                        onLogin(profile);
+                    } else {
+                        // ── SIGN UP ──────────────────────────────────────
+                        if (!name || !email || !password || !phone) {
+                            setError('Please fill in all fields.');
+                            setLoading(false);
+                            return;
+                        }
+                        console.log("[Auth] Creating account — role:", role, "email:", email);
+                        // Block onAuthStateChanged from racing ahead before Firestore doc is ready
+                        window.__fbSkipAuthCallback = true;
+                        try {
+                            const cred = await fbAuth.createUserWithEmailAndPassword(email, password);
+                            const uid  = cred.user.uid;
+                            // Admin accounts created via sign-up get verified:true automatically.
+                            // NGOs go through the pending → admin-approval flow.
+                            const profile = {
+                                uid,
+                                name,
+                                email,
+                                role,
+                                phone,
+                                latitude:  location.latitude,
+                                longitude: location.longitude,
+                                verified:  role === 'donor' || role === 'admin'
+                            };
+                            await fbCreateUser(uid, profile);
+                            console.log("[Auth] Account created — uid:", uid, "role:", role, "verified:", profile.verified);
+                            window.__fbUser      = profile;
+                            window.__fbAuthReady = true;
+                            onLogin(profile);
+                        } finally {
+                            window.__fbSkipAuthCallback = false;
+                        }
+                    }
+                } catch (err) {
+                    console.error("[Auth] Error:", err.code, err.message);
+                    setError(friendlyError(err));
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            /**
+             * quickLogin
+             * Triggered by demo buttons. Calls fbEnsureDemoAccount which
+             * automatically creates the account if it doesn't exist yet,
+             * then signs in and routes to the correct dashboard.
+             */
+            const quickLogin = async (key) => {
+                setError('');
+                setDemoLoading(key);
+                console.log(`[Demo] Quick-login triggered for: ${key}`);
+                try {
+                    const profile = await fbEnsureDemoAccount(key);
+                    window.__fbUser = profile;
+                    console.log(`[Demo] ✓ Routing to dashboard — role: ${profile.role}`);
+                    onLogin(profile);
+                } catch (err) {
+                    console.error(`[Demo] quickLogin failed for ${key}:`, err.message);
+                    setError(`Demo login failed: ${err.message}`);
+                } finally {
+                    setDemoLoading(null);
+                }
+            };
+
+            return (
+                <div className="auth-wrapper">
+                    <div className="auth-card">
+                        <div className="auth-logo">
+                            <div className="auth-logo-mark">🌿</div>
+                            <div className="auth-title">ResourceBridge</div>
+                            <div className="auth-subtitle">Surplus to Need Platform</div>
+                        </div>
+
+                        {error && <div className="error-msg">{error}</div>}
+
+                        <form onSubmit={handleSubmit}>
+                            {!isLogin && (
+                                <>
+                                    <div className="form-group">
+                                        <label className="form-label">Full Name</label>
+                                        <input type="text" className="form-input" value={name} onChange={e => setName(e.target.value)} placeholder="Your full name" />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Role</label>
+                                        <select className="form-select" value={role} onChange={e => setRole(e.target.value)}>
+                                            <option value="donor">Donor</option>
+                                            <option value="ngo">NGO</option>
+                                            <option value="admin">Administrator</option>
+                                        </select>
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Phone Number</label>
+                                        <input type="tel" className="form-input" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+91 1234567890" />
+                                    </div>
+                                </>
+                            )}
+                            <div className="form-group">
+                                <label className="form-label">Email</label>
+                                <input type="email" className="form-input" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Password</label>
+                                <input type="password" className="form-input" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" />
+                            </div>
+                            <button type="submit" className="btn btn-primary" disabled={loading || demoLoading !== null} style={{ width: '100%', padding: '14px', fontSize: '15px', justifyContent: 'center', marginTop: '8px', opacity: (loading || demoLoading !== null) ? 0.7 : 1 }}>
+                                {loading ? '⏳ Please wait…' : (isLogin ? 'Sign In' : 'Create Account')}
+                            </button>
+                        </form>
+
+                        <div className="auth-toggle">
+                            {isLogin ? "New here? " : "Have an account? "}
+                            <span className="auth-toggle-link" onClick={() => { setIsLogin(!isLogin); setError(''); }}>
+                                {isLogin ? 'Create account' : 'Sign in'}
+                            </span>
+                        </div>
+
+                        {isLogin && (
+                            <div className="auth-demo">
+                                <div className="auth-demo-label">Quick demo access</div>
+                                <div className="auth-demo-btns">
+                                    <button
+                                        type="button"
+                                        className="btn btn-secondary btn-small"
+                                        disabled={demoLoading !== null}
+                                        style={{ opacity: demoLoading !== null ? 0.65 : 1 }}
+                                        onClick={() => quickLogin('donor')}
+                                    >
+                                        {demoLoading === 'donor' ? '⏳' : '🤲'} Donor
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="btn btn-secondary btn-small"
+                                        disabled={demoLoading !== null}
+                                        style={{ opacity: demoLoading !== null ? 0.65 : 1 }}
+                                        onClick={() => quickLogin('ngo')}
+                                    >
+                                        {demoLoading === 'ngo' ? '⏳' : '🏥'} NGO
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="btn btn-secondary btn-small"
+                                        disabled={demoLoading !== null}
+                                        style={{ opacity: demoLoading !== null ? 0.65 : 1 }}
+                                        onClick={() => quickLogin('admin')}
+                                    >
+                                        {demoLoading === 'admin' ? '⏳' : '⚙️'} Admin
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // Resource Card  ── now includes image thumbnail + Mark Complete button
+        function ResourceCard({ resource, isDonor, onAccept, onDelete, onComplete, onRelease, showDistance, isAccepting, isReleasing }) {
+            const categoryIcons = { Food: '🌾', Clothes: '🧥', Devices: '📱', Crops: '🫘', Medicine: '💊' };
+            return (
+                <div className="resource-card">
+                    {/* Resource image if present */}
+                    {resource.imageURL && (
+                        <img
+                            src={resource.imageURL}
+                            alt={resource.category}
+                            style={{ width: '100%', height: '160px', objectFit: 'cover', borderRadius: 'var(--radius-md)', marginBottom: '16px' }}
+                        />
+                    )}
+
+                    <div className="resource-header">
+                        <span className={`resource-category category-${(resource.category||'food').toLowerCase()}`}>
+                            <span>{categoryIcons[resource.category] || '📦'}</span>
+                            {resource.category || 'Unknown'}
+                        </span>
+                        <span className={`status-badge status-${(resource.status||'available').toLowerCase()}`}>
+                            {resource.status || 'AVAILABLE'}
+                        </span>
+                    </div>
+
+                    <div className="resource-title">{resource.quantity}</div>
+                    <div className="resource-description">{resource.description}</div>
+                    <div className="resource-divider"></div>
+
+                    <div className="resource-info">
+                        {!isDonor && (
+                            <div className="resource-info-item">
+                                <span className="resource-info-icon">👤</span>
+                                <span>{resource.donorName}</span>
+                            </div>
+                        )}
+                        {resource.expiryDate && (
+                            <div className="resource-info-item">
+                                <span className="resource-info-icon">⏳</span>
+                                <span>Expires {new Date(resource.expiryDate).toLocaleDateString('en-IN')}</span>
+                            </div>
+                        )}
+                        <div className="resource-info-item">
+                            <span className="resource-info-icon">📅</span>
+                            <span>Pickup from {formatDate(resource.pickupStart)}</span>
+                        </div>
+                        {showDistance && resource.distance !== undefined && (
+                            <div className="resource-info-item">
+                                <span className="resource-info-icon">📍</span>
+                                <span className="distance-badge">{resource.distance.toFixed(1)} km away</span>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="resource-actions">
+                        {/* NGO: Accept available resource */}
+                        {onAccept && resource.status === 'AVAILABLE' && (
+                            <button
+                                className="btn btn-success"
+                                style={{ flex: 1, justifyContent: 'center', opacity: isAccepting ? 0.7 : 1 }}
+                                disabled={!!isAccepting}
+                                onClick={() => onAccept(resource)}
+                            >
+                                {isAccepting ? '⏳ Accepting…' : '✓ Accept Resource'}
+                            </button>
+                        )}
+                        {/* NGO: Release an accepted/reserved resource back to pool */}
+                        {onRelease && resource.status === 'RESERVED' && (
+                            <button
+                                className="btn btn-danger btn-small"
+                                style={{ opacity: isReleasing ? 0.7 : 1 }}
+                                disabled={!!isReleasing}
+                                onClick={() => onRelease(resource)}
+                            >
+                                {isReleasing ? '⏳ Releasing…' : '↩ Release'}
+                            </button>
+                        )}
+                        {/* Donor: Mark reserved resource as completed (pickup confirmed) */}
+                        {onComplete && resource.status === 'RESERVED' && (
+                            <button className="btn btn-warning" style={{ flex: 1, justifyContent: 'center' }} onClick={() => onComplete(resource.id)}>
+                                ✓ Mark Picked Up
+                            </button>
+                        )}
+                        {/* Donor: Remove available resource */}
+                        {onDelete && resource.status === 'AVAILABLE' && (
+                            <button className="btn btn-danger btn-small" onClick={() => onDelete(resource.id)}>
+                                Remove
+                            </button>
+                        )}
+                    </div>
+
+                    {resource.status === 'RESERVED' && !isDonor && (
+                        <div className="contact-note">
+                            📞 Contact {resource.donorName} to coordinate pickup
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // Donor Dashboard  ── real-time Firestore listener + image upload
+        function DonorDashboard({ user, onUpdate }) {
+            const [activeTab, setActiveTab]   = useState('overview');
+            const [resources, setResources]   = useState([]);
+            const [notification, setNotification] = useState(null);
+            const [showForm, setShowForm]     = useState(false);
+            const [submitting, setSubmitting] = useState(false);
+            const [formData, setFormData]     = useState({ category: 'Food', quantity: '', description: '', expiryDate: '', pickupStart: '', pickupEnd: '' });
+            const [imageFile, setImageFile]   = useState(null);
+            const unsubRef = useRef(null);
+
+            useEffect(() => {
+                // Real-time listener: donor's own resources (onSnapshot)
+                unsubRef.current = fbListenDonorResources(user.uid, (docs) => {
+                    setResources(docs);
+                });
+                return () => { if (unsubRef.current) unsubRef.current(); };
+            }, [user.uid]);
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setSubmitting(true);
+                try {
+                    await fbAddResource(
+                        {
+                            ...formData,
+                            donorId:   user.uid,
+                            donorName: user.name,
+                            latitude:  user.latitude  || 19.0760,
+                            longitude: user.longitude || 72.8777
+                        },
+                        imageFile   // may be null — handled inside fbAddResource
+                    );
+                    setNotification({ message: 'Resource listed successfully! Nearby NGOs can now see it.', type: 'success' });
+                    setFormData({ category: 'Food', quantity: '', description: '', expiryDate: '', pickupStart: '', pickupEnd: '' });
+                    setImageFile(null);
+                    setShowForm(false);
+                    onUpdate();
+                } catch (err) {
+                    setNotification({ message: 'Failed to list resource. Please try again.', type: 'error' });
+                } finally {
+                    setSubmitting(false);
+                }
+            };
+
+            const handleDelete = async (id) => {
+                if (!confirm('Remove this resource?')) return;
+                try {
+                    await fbDeleteResource(id);
+                    setNotification({ message: 'Resource removed.', type: 'success' });
+                    onUpdate();
+                } catch (err) {
+                    setNotification({ message: 'Failed to remove resource.', type: 'error' });
+                }
+            };
+
+            // Mark a RESERVED resource as COMPLETED (pickup confirmed by donor)
+            const handleComplete = async (id) => {
+                try {
+                    await fbUpdateResource(id, { status: 'COMPLETED' });
+                    setNotification({ message: 'Marked as completed. Thank you for your donation! 🌱', type: 'success' });
+                    onUpdate();
+                } catch (err) {
+                    setNotification({ message: 'Failed to update status.', type: 'error' });
+                }
+            };
+
+            const stats = {
+                total:     resources.length,
+                available: resources.filter(r => r.status === 'AVAILABLE').length,
+                reserved:  resources.filter(r => r.status === 'RESERVED').length,
+                completed: resources.filter(r => r.status === 'COMPLETED').length
+            };
+
+            return (
+                <>
+                    <div className="dashboard-header">
+                        <div>
+                            <div className="dashboard-title">Your Donations</div>
+                            <div className="dashboard-subtitle">Welcome back, {user.name}</div>
+                        </div>
+                        <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
+                            {showForm ? '← Back' : '+ List Resource'}
+                        </button>
+                    </div>
+
+                    {showForm ? (
+                        <div className="form-section fade-up">
+                            <div className="form-section-title">List a New Resource</div>
+                            <form onSubmit={handleSubmit}>
+                                <div className="form-group">
+                                    <label className="form-label">Category</label>
+                                    <select className="form-select" value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })}>
+                                        <option>Food</option><option>Clothes</option><option>Devices</option><option>Crops</option><option>Medicine</option>
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Quantity</label>
+                                    <input type="text" className="form-input" placeholder="e.g. 50 kg, 100 units, 25 pieces" value={formData.quantity} onChange={e => setFormData({ ...formData, quantity: e.target.value })} required />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Description</label>
+                                    <textarea className="form-textarea" placeholder="Describe the resource in detail…" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} required />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Expiry Date (if applicable)</label>
+                                    <input type="date" className="form-input" value={formData.expiryDate} onChange={e => setFormData({ ...formData, expiryDate: e.target.value })} />
+                                </div>
+                                <div className="form-row">
+                                    <div className="form-group">
+                                        <label className="form-label">Pickup Window — Start</label>
+                                        <input type="datetime-local" className="form-input" value={formData.pickupStart} onChange={e => setFormData({ ...formData, pickupStart: e.target.value })} required />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Pickup Window — End</label>
+                                        <input type="datetime-local" className="form-input" value={formData.pickupEnd} onChange={e => setFormData({ ...formData, pickupEnd: e.target.value })} required />
+                                    </div>
+                                </div>
+                                {/* Image Upload */}
+                                <div className="form-group">
+                                    <label className="form-label">Resource Photo (optional)</label>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="form-input"
+                                        style={{ padding: '10px 16px' }}
+                                        onChange={e => setImageFile(e.target.files[0] || null)}
+                                    />
+                                    {imageFile && (
+                                        <div style={{ marginTop: '8px', fontSize: '13px', color: 'var(--text-soft)' }}>
+                                            📷 {imageFile.name}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="location-info">
+                                    📍 Pickup location: {(user.latitude || 19.0760).toFixed(4)}, {(user.longitude || 72.8777).toFixed(4)}
+                                </div>
+                                <button type="submit" className="btn btn-primary" disabled={submitting} style={{ width: '100%', marginTop: '24px', padding: '14px', justifyContent: 'center', fontSize: '15px', opacity: submitting ? 0.7 : 1 }}>
+                                    {submitting ? '⏳ Uploading…' : 'Publish Resource'}
+                                </button>
+                            </form>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="stats-grid">
+                                <div className="stat-card fade-up fade-up-1">
+                                    <span className="stat-card-icon">📦</span>
+                                    <div className="stat-value">{stats.total}</div>
+                                    <div className="stat-label">Total Resources</div>
+                                    <div className="stat-trend">All listings</div>
+                                </div>
+                                <div className="stat-card fade-up fade-up-2">
+                                    <span className="stat-card-icon">🌱</span>
+                                    <div className="stat-value">{stats.available}</div>
+                                    <div className="stat-label">Available Now</div>
+                                    <div className="stat-trend">Open for pickup</div>
+                                </div>
+                                <div className="stat-card fade-up fade-up-3">
+                                    <span className="stat-card-icon">📅</span>
+                                    <div className="stat-value">{stats.reserved}</div>
+                                    <div className="stat-label">Pickup Scheduled</div>
+                                    <div className="stat-trend">In progress</div>
+                                </div>
+                                <div className="stat-card fade-up fade-up-4">
+                                    <span className="stat-card-icon">✓</span>
+                                    <div className="stat-value">{stats.completed}</div>
+                                    <div className="stat-label">Completed</div>
+                                    <div className="stat-trend">Successfully delivered</div>
+                                </div>
+                            </div>
+
+                            <div className="tab-container">
+                                <button className={`tab ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}>Overview</button>
+                                <button className={`tab ${activeTab === 'all' ? 'active' : ''}`} onClick={() => setActiveTab('all')}>All ({resources.length})</button>
+                                <button className={`tab ${activeTab === 'active' ? 'active' : ''}`} onClick={() => setActiveTab('active')}>Active ({stats.available})</button>
+                                <button className={`tab ${activeTab === 'reserved' ? 'active' : ''}`} onClick={() => setActiveTab('reserved')}>Reserved ({stats.reserved})</button>
+                            </div>
+
+                            {activeTab === 'overview' && (
+                                <div>
+                                    <div className="section-label">Recent Listings</div>
+                                    {resources.length === 0 ? (
+                                        <div className="empty-state">
+                                            <span className="empty-state-icon">📦</span>
+                                            <div className="empty-state-text">No resources yet</div>
+                                            <div className="empty-state-subtext">Click "List Resource" to get started</div>
+                                        </div>
+                                    ) : (
+                                        <div className="resource-grid">
+                                            {resources.slice(0, 6).map(r => <ResourceCard key={r.id} resource={r} isDonor={true} onDelete={handleDelete} onComplete={handleComplete} />)}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            {activeTab === 'all' && (
+                                <div>
+                                    <div className="section-label">All Resources</div>
+                                    <div className="resource-grid">{resources.map(r => <ResourceCard key={r.id} resource={r} isDonor={true} onDelete={handleDelete} onComplete={handleComplete} />)}</div>
+                                </div>
+                            )}
+                            {activeTab === 'active' && (
+                                <div>
+                                    <div className="section-label">Active Resources</div>
+                                    <div className="resource-grid">{resources.filter(r => r.status === 'AVAILABLE').map(r => <ResourceCard key={r.id} resource={r} isDonor={true} onDelete={handleDelete} />)}</div>
+                                </div>
+                            )}
+                            {activeTab === 'reserved' && (
+                                <div>
+                                    <div className="section-label">Reserved Resources</div>
+                                    <div className="resource-grid">{resources.filter(r => r.status === 'RESERVED').map(r => <ResourceCard key={r.id} resource={r} isDonor={true} onComplete={handleComplete} />)}</div>
+                                </div>
+                            )}
+                        </>
+                    )}
+                    {notification && <Notification message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}
+                </>
+            );
+        }
+
+        
+        function NGODashboard({ user, onUpdate }) {
+            const [activeTab, setActiveTab]       = useState('available');
+            const [resources, setResources]       = useState([]);   
+            const [myRequests, setMyRequests]     = useState([]);   
+            const [acceptedRes, setAcceptedRes]   = useState([]);   
+            const [notification, setNotification] = useState(null);
+            const [categoryFilter, setCategoryFilter] = useState('All');
+            const [acceptingId, setAcceptingId]   = useState(null); 
+            const [releasingId, setReleasingId]   = useState(null); 
+            const [acceptError, setAcceptError]   = useState(null); 
+            const [rulesBlocked, setRulesBlocked] = useState(false); 
+            const [showRulesHelp, setShowRulesHelp] = useState(false);
+
+        
+            useEffect(() => {
+                const interval = setInterval(() => {
+                    if (window.__rulesOk === false) {
+                        setRulesBlocked(true);
+                        clearInterval(interval);
+                    } else if (window.__rulesOk === true) {
+                        setRulesBlocked(false);
+                        clearInterval(interval);
+                    }
+                }, 800);
+                return () => clearInterval(interval);
+            }, []);
+            const unsubResRef    = useRef(null);
+            const unsubReqRef    = useRef(null);
+            const acceptedSubsRef = useRef({});
+            const acceptedMapRef  = useRef({});
+            const userLat = user.latitude  || 19.0760;
+            const userLng = user.longitude || 72.8777;
+
+            useEffect(() => {
+                unsubResRef.current = fbListenAvailableResources((docs) => {
+                    const withDist = docs
+                        .map(r => ({
+                            ...r,
+                            latitude:  r.latitude  || 19.0760,
+                            longitude: r.longitude || 72.8777,
+                            distance:  getDistance(userLat, userLng, r.latitude || 19.0760, r.longitude || 72.8777)
+                        }))
+                        .sort((a, b) => a.distance - b.distance);
+                    console.log("[NGO] Available resources loaded:", withDist.length);
+                    setResources(withDist);
+                });
+
+                
+                unsubReqRef.current = fbListenNGORequests(user.uid, (reqs) => {
+                    setMyRequests(reqs);
+
+                    const currentIds = new Set(reqs.map(r => r.resourceId));
+                    Object.keys(acceptedSubsRef.current).forEach(rid => {
+                        if (!currentIds.has(rid)) {
+                            acceptedSubsRef.current[rid]();
+                            delete acceptedSubsRef.current[rid];
+                            delete acceptedMapRef.current[rid];
+                        }
+                    });
+                    reqs.forEach(req => {
+                        if (acceptedSubsRef.current[req.resourceId]) return;
+
+                        const unsub = fbDB.collection("resources").doc(req.resourceId)
+                            .onSnapshot(
+                                snap => {
+                                    if (!snap.exists) {
+                                        delete acceptedMapRef.current[req.resourceId];
+                                    } else {
+                                        const r = { id: snap.id, ...snap.data() };
+                                        acceptedMapRef.current[req.resourceId] = {
+                                            ...r,
+                                            latitude:  r.latitude  || 0,
+                                            longitude: r.longitude || 0,
+                                            distance:  getDistance(userLat, userLng, r.latitude || 0, r.longitude || 0)
+                                        };
+                                    }
+                                    setAcceptedRes(Object.values(acceptedMapRef.current));
+                                },
+                                e => console.error("[FB] accepted resource listener:", req.resourceId, e.message)
+                            );
+
+                        acceptedSubsRef.current[req.resourceId] = unsub;
+                    });
+                });
+
+                return () => {
+                    if (unsubResRef.current)  unsubResRef.current();
+                    if (unsubReqRef.current)  unsubReqRef.current();
+                    Object.values(acceptedSubsRef.current).forEach(fn => fn());
+                    acceptedSubsRef.current = {};
+                    acceptedMapRef.current  = {};
+                };
+            }, [user.uid]);
+
+            const handleAccept = async (resource) => {
+                if (acceptingId) return; 
+                console.log("[NGO] Accepting resource:", resource.id, "| NGO uid:", user.uid, "| verified:", user.verified);
+                setAcceptingId(resource.id);
+                setAcceptError(null); 
+                try {
+                    console.log("[NGO] Step 1 — writing request doc");
+                    const reqRef = fbDB.collection("requests").doc();
+                    await reqRef.set({
+                        resourceId: resource.id,
+                        ngoId:      user.uid,
+                        ngoName:    user.name,
+                        donorId:    resource.donorId   || '',
+                        donorName:  resource.donorName || '',
+                        category:   resource.category  || '',
+                        status:     'ACCEPTED',
+                        createdAt:  firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    console.log("[NGO] Step 1 done — request doc written:", reqRef.id);
+
+                    
+                    console.log("[NGO] Step 2 — updating resource status to RESERVED");
+                    await fbDB.collection("resources").doc(resource.id).update({
+                        status:      'RESERVED',
+                        assignedNGO: user.uid
+                    });
+                    console.log("[NGO] Step 2 done — resource marked RESERVED");
+
+                    console.log("[NGO] ✓ Accept complete for resource:", resource.id);
+                    setNotification({ message: '✓ Resource accepted! Contact the donor to arrange pickup.', type: 'success' });
+                    setActiveTab('accepted');
+                    onUpdate();
+                } catch (err) {
+                    console.error("[NGO] handleAccept FAILED — code:", err.code, "| message:", err.message);
+                    let userMsg = '';
+                    if (err.code === 'permission-denied') {
+                        userMsg = 'Permission denied. Update Firestore Rules: allow read, write on requests and resources for authenticated users.'
+                    } else if (err.code === 'not-found') {
+                        userMsg = 'This resource no longer exists — it may have been removed by the donor.';
+                    } else if (err.code === 'unavailable') {
+                        userMsg = 'Network unavailable. Please check your internet connection.';
+                    } else {
+                        userMsg = 'Error [' + (err.code || 'unknown') + ']: ' + err.message;
+                    }
+                    setAcceptError(userMsg); 
+                    setNotification({ message: userMsg, type: 'error' });
+                } finally {
+                    setAcceptingId(null);
+                }
+            };
+
+            const handleRelease = async (resource) => {
+                if (!window.confirm('Release this resource back to Available? Other NGOs will be able to accept it again.')) return;
+                if (releasingId) return;
+                console.log("[NGO] Releasing resource:", resource.id);
+                setReleasingId(resource.id);
+                try {
+                    await fbReleaseResource(resource.id, user.uid);
+                    console.log("[NGO] Resource released:", resource.id);
+                    setNotification({ message: 'Resource released back to available pool.', type: 'info' });
+                    onUpdate();
+                } catch (err) {
+                    console.error("[NGO] handleRelease error:", err.code, err.message);
+                    setNotification({ message: 'Failed to release resource: ' + err.message, type: 'error' });
+                } finally {
+                    setReleasingId(null);
+                }
+            };
+
+            if (!user.verified) {
+                return (
+                    <div className="verification-banner" style={{ maxWidth: '560px', margin: '50px auto' }}>
+                        <div className="verification-icon">⏳</div>
+                        <div>
+                            <div className="verification-title">Awaiting Verification</div>
+                            <div className="verification-text">Your NGO account is under review. You'll gain full access once approved — typically within 24–48 hours.</div>
+                        </div>
+                    </div>
+                );
+            }
+
+            const filteredResources = categoryFilter === 'All' ? resources : resources.filter(r => r.category === categoryFilter);
+
+            return (
+                <>
+                    <div className="dashboard-header">
+                        <div>
+                            <div className="dashboard-title">Available Resources</div>
+                            <div className="dashboard-subtitle">Welcome, {user.name}</div>
+                        </div>
+                    </div>
+
+                    {/* Firestore Rules Warning Banner */}
+                    {rulesBlocked && (
+                        <div style={{
+                            background: '#fff8e1', border: '1px solid #f6b800', borderRadius: 'var(--radius-lg)',
+                            padding: '20px 24px', marginBottom: '24px', borderLeft: '4px solid #f6b800'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <div>
+                                    <div style={{ fontWeight: 700, color: '#7a5600', marginBottom: '6px', fontSize: '15px' }}>
+                                        ⚠️ Firestore Security Rules are blocking writes
+                                    </div>
+                                    <div style={{ fontSize: '13px', color: '#8a6200', lineHeight: 1.6 }}>
+                                        The "Accept Resource" button will fail until you update your Firestore rules.
+                                        Go to <strong>Firebase Console → Firestore → Rules</strong> and paste the rules below.
+                                    </div>
+                                </div>
+                                <button
+                                    className="btn btn-small btn-ghost"
+                                    onClick={() => setShowRulesHelp(!showRulesHelp)}
+                                    style={{ marginLeft: '16px', flexShrink: 0 }}
+                                >
+                                    {showRulesHelp ? 'Hide' : 'Show Rules ↓'}
+                                </button>
+                            </div>
+                            {showRulesHelp && (
+                                <pre style={{
+                                    marginTop: '16px', background: '#1e1e1e', color: '#d4d4d4',
+                                    padding: '16px', borderRadius: 'var(--radius-sm)', fontSize: '12px',
+                                    overflowX: 'auto', lineHeight: 1.7, whiteSpace: 'pre'
+                                }}>{`rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users: anyone authenticated can read;
+    // owner can write their own doc; admin can update any user (for NGO verification)
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null;
+    }
+
+    // Resources: authenticated users can read; donors can create/update their own
+    // NGOs can update status to RESERVED (to accept a resource)
+    match /resources/{resourceId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null
+                    && request.auth.uid == resource.data.donorId;
+    }
+
+    // Requests: authenticated users can read/create; NGOs can manage their own
+    match /requests/{requestId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null
+                            && request.auth.uid == resource.data.ngoId;
+    }
+
+    // Rules probe (used by the app to detect permission issues)
+    match /_rules_probe/{uid} {
+      allow read, write, delete: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}`}</pre>
+                            )}
+                        </div>
+                    )}
+
+                    <div className="stats-grid">
+                        <div className="stat-card fade-up fade-up-1">
+                            <span className="stat-card-icon">🔍</span>
+                            <div className="stat-value">{resources.length}</div>
+                            <div className="stat-label">Available Nearby</div>
+                        </div>
+                        <div className="stat-card fade-up fade-up-2">
+                            <span className="stat-card-icon">✓</span>
+                            <div className="stat-value">{myRequests.length}</div>
+                            <div className="stat-label">Accepted</div>
+                        </div>
+                        <div className="stat-card fade-up fade-up-3">
+                            <span className="stat-card-icon">📍</span>
+                            <div className="stat-value">50</div>
+                            <div className="stat-label">km Radius</div>
+                        </div>
+                        <div className="stat-card fade-up fade-up-4">
+                            <span className="stat-card-icon">⭐</span>
+                            <div className="stat-value">{user.rating || '—'}</div>
+                            <div className="stat-label">Your Rating</div>
+                        </div>
+                    </div>
+
+                    <div className="tab-container">
+                        <button className={`tab ${activeTab === 'available' ? 'active' : ''}`} onClick={() => setActiveTab('available')}>Browse ({filteredResources.length})</button>
+                        <button className={`tab ${activeTab === 'accepted' ? 'active' : ''}`} onClick={() => setActiveTab('accepted')}>Accepted ({myRequests.length})</button>
+                    </div>
+
+                    {activeTab === 'available' && (
+                        <div>
+                            <div className="filter-bar">
+                                <span className="filter-label">Filter:</span>
+                                <select className="filter-select" value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>
+                                    <option value="All">All Categories</option>
+                                    <option value="Food">Food</option><option value="Clothes">Clothes</option><option value="Devices">Devices</option><option value="Crops">Crops</option><option value="Medicine">Medicine</option>
+                                </select>
+                            </div>
+                            {acceptError && (
+                                <div style={{
+                                    background: '#fff0f0', border: '1px solid #e57373',
+                                    borderLeft: '4px solid #e53935', borderRadius: 'var(--radius-sm)',
+                                    padding: '14px 18px', marginBottom: '16px',
+                                    display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px'
+                                }}>
+                                    <div>
+                                        <div style={{ fontWeight: 700, color: '#b71c1c', marginBottom: '4px', fontSize: '13.5px' }}>
+                                            Accept failed
+                                        </div>
+                                        <div style={{ fontSize: '13px', color: '#c62828', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                                            {acceptError}
+                                        </div>
+                                    </div>
+                                    <button
+                                        className="btn btn-ghost btn-small"
+                                        onClick={() => { setAcceptError(null); }}
+                                        style={{ flexShrink: 0, fontSize: '11px' }}
+                                    >Dismiss</button>
+                                </div>
+                            )}
+                            {filteredResources.length === 0 ? (
+                                <div className="empty-state">
+                                    <span className="empty-state-icon">🔍</span>
+                                    <div className="empty-state-text">Nothing available yet</div>
+                                    <div className="empty-state-subtext">Check back soon for new donations</div>
+                                </div>
+                            ) : (
+                                <div className="resource-grid">{filteredResources.map(r => (
+                                    <ResourceCard
+                                        key={r.id}
+                                        resource={r}
+                                        onAccept={handleAccept}
+                                        showDistance={true}
+                                        isAccepting={acceptingId === r.id}
+                                    />
+                                ))}</div>
+                            )}
+                        </div>
+                    )}
+                    {activeTab === 'accepted' && (
+                        <div>
+                            {acceptedRes.length === 0 ? (
+                                <div className="empty-state">
+                                    <span className="empty-state-icon">✓</span>
+                                    <div className="empty-state-text">No accepted requests yet</div>
+                                    <div className="empty-state-subtext">Browse available resources to get started</div>
+                                </div>
+                            ) : (
+                                <div className="resource-grid">{acceptedRes.map(r => (
+                                    <ResourceCard
+                                        key={r.id}
+                                        resource={r}
+                                        showDistance={true}
+                                        onRelease={handleRelease}
+                                        isReleasing={releasingId === r.id}
+                                    />
+                                ))}</div>
+                            )}
+                        </div>
+                    )}
+                    {notification && <Notification message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}
+                </>
+            );
+        }
+        function AdminDashboard({ user, onUpdate }) {
+            const [users, setUsers]               = useState([]);
+            const [resources, setResources]       = useState([]);
+            const [requests, setRequests]         = useState([]);
+            const [notification, setNotification] = useState(null);
+            const [adminTab, setAdminTab]         = useState('ngos');
+            const [verifyingId, setVerifyingId]   = useState(null);
+            const unsubUsersRef = useRef(null);
+            const unsubResRef   = useRef(null);
+            const unsubReqRef   = useRef(null);
+
+            useEffect(() => {
+                unsubUsersRef.current = fbListenUsers((docs)       => setUsers(docs));
+                unsubResRef.current   = fbListenAllResources((docs) => setResources(docs));
+                unsubReqRef.current   = fbListenAllRequests((docs)  => setRequests(docs));
+                return () => {
+                    if (unsubUsersRef.current) unsubUsersRef.current();
+                    if (unsubResRef.current)   unsubResRef.current();
+                    if (unsubReqRef.current)   unsubReqRef.current();
+                };
+            }, []);
+
+            const handleVerifyNGO = async (ngoUser) => {
+                if (verifyingId) return;
+                console.log("[Admin] Verifying NGO:", ngoUser.uid, ngoUser.name);
+                setVerifyingId(ngoUser.uid);
+                try {
+                    await fbDB.collection("users").doc(ngoUser.uid).update({ verified: true });
+                    console.log("[Admin] ✓ NGO verified successfully:", ngoUser.uid);
+                    setNotification({ message: `${ngoUser.name} has been verified ✓`, type: 'success' });
+                    onUpdate();
+                } catch (err) {
+                    console.error("[Admin] handleVerifyNGO FAILED — code:", err.code, "message:", err.message);
+                    let msg = 'Failed to verify NGO.';
+                    if (err.code === 'permission-denied') {
+                        msg = 'Permission denied. Update Firestore rules to allow admin to update any user document.';
+                    } else {
+                        msg = 'Error: ' + err.message;
+                    }
+                    setNotification({ message: msg, type: 'error' });
+                } finally {
+                    setVerifyingId(null);
+                }
+            };
+
+            const pendingNGOs  = users.filter(u => u.role === 'ngo' && !u.verified);
+            const verifiedNGOs = users.filter(u => u.role === 'ngo' && u.verified);
+            const donors       = users.filter(u => u.role === 'donor');
+            const donorName = (donorId) => {
+                const d = users.find(u => u.uid === donorId);
+                return d ? d.name : donorId;
+            };
+
+            return (
+                <>
+                    <div className="dashboard-header">
+                        <div>
+                            <div className="dashboard-title">Admin Overview</div>
+                            <div className="dashboard-subtitle">Platform management &amp; moderation</div>
+                        </div>
+                    </div>
+
+                    <div className="stats-grid">
+                        <div className="stat-card fade-up fade-up-1">
+                            <span className="stat-card-icon">🤲</span>
+                            <div className="stat-value">{donors.length}</div>
+                            <div className="stat-label">Total Donors</div>
+                        </div>
+                        <div className="stat-card fade-up fade-up-2">
+                            <span className="stat-card-icon">🏥</span>
+                            <div className="stat-value">{verifiedNGOs.length}</div>
+                            <div className="stat-label">Verified NGOs</div>
+                        </div>
+                        <div className="stat-card fade-up fade-up-3">
+                            <span className="stat-card-icon">📦</span>
+                            <div className="stat-value">{resources.length}</div>
+                            <div className="stat-label">Total Resources</div>
+                        </div>
+                        <div className="stat-card fade-up fade-up-4">
+                            <span className="stat-card-icon">⏳</span>
+                            <div className="stat-value">{pendingNGOs.length}</div>
+                            <div className="stat-label">Pending Reviews</div>
+                        </div>
+                    </div>
+
+                    {/* Admin sub-tabs */}
+                    <div className="tab-container">
+                        <button className={`tab ${adminTab === 'ngos'      ? 'active' : ''}`} onClick={() => setAdminTab('ngos')}>NGO Verifications ({pendingNGOs.length})</button>
+                        <button className={`tab ${adminTab === 'resources' ? 'active' : ''}`} onClick={() => setAdminTab('resources')}>All Resources ({resources.length})</button>
+                        <button className={`tab ${adminTab === 'requests'  ? 'active' : ''}`} onClick={() => setAdminTab('requests')}>All Requests ({requests.length})</button>
+                        <button className={`tab ${adminTab === 'users'     ? 'active' : ''}`} onClick={() => setAdminTab('users')}>All Users ({users.length})</button>
+                    </div>
+
+                    {/* ── Tab: NGO Verifications ── */}
+                    {adminTab === 'ngos' && (
+                        <>
+                            <div className="section-label" style={{ marginTop: '8px' }}>Pending NGO Verifications</div>
+                            {pendingNGOs.length === 0 ? (
+                                <div className="no-pending">All NGOs have been reviewed ✓</div>
+                            ) : (
+                                <div className="admin-grid">
+                                    {pendingNGOs.map(ngo => (
+                                        <div key={ngo.uid} className="admin-card fade-up">
+                                            <div style={{ fontSize: '36px', marginBottom: '14px' }}>🏥</div>
+                                            <div className="resource-title" style={{ marginBottom: '14px' }}>{ngo.name}</div>
+                                            <div className="resource-info">
+                                                <div className="resource-info-item"><span className="resource-info-icon">✉</span><span>{ngo.email}</span></div>
+                                                <div className="resource-info-item"><span className="resource-info-icon">📞</span><span>{ngo.phone}</span></div>
+                                                <div className="resource-info-item"><span className="resource-info-icon">📅</span><span>Registered {formatDate(ngo.createdAt?.toDate ? ngo.createdAt.toDate().toISOString() : ngo.createdAt)}</span></div>
+                                                <div className="resource-info-item"><span className="resource-info-icon">📍</span><span>{(ngo.latitude||0).toFixed(4)}, {(ngo.longitude||0).toFixed(4)}</span></div>
+                                            </div>
+                                            <button
+                                                className="btn btn-success"
+                                                style={{ width: '100%', marginTop: '18px', padding: '13px', justifyContent: 'center', opacity: verifyingId === ngo.uid ? 0.7 : 1 }}
+                                                disabled={!!verifyingId}
+                                                onClick={() => handleVerifyNGO(ngo)}
+                                            >
+                                                {verifyingId === ngo.uid ? '⏳ Verifying…' : '✓ Verify NGO'}
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </>
+                    )}
+
+                    {/* ── Tab: All Resources ── */}
+                    {adminTab === 'resources' && (
+                        <>
+                            <div className="section-label" style={{ marginTop: '8px' }}>All Platform Resources (live)</div>
+                            {resources.length === 0 ? (
+                                <div className="empty-state">
+                                    <span className="empty-state-icon">📦</span>
+                                    <div className="empty-state-text">No resources yet</div>
+                                    <div className="empty-state-subtext">Resources listed by donors will appear here</div>
+                                </div>
+                            ) : (
+                                <div className="resource-grid">
+                                    {resources.map(r => <ResourceCard key={r.id} resource={r} />)}
+                                </div>
+                            )}
+                        </>
+                    )}
+
+                    {/* ── Tab: All Requests ── */}
+                    {adminTab === 'requests' && (
+                        <>
+                            <div className="section-label" style={{ marginTop: '8px' }}>All Pickup Requests (live)</div>
+                            {requests.length === 0 ? (
+                                <div className="empty-state">
+                                    <span className="empty-state-icon">📋</span>
+                                    <div className="empty-state-text">No requests yet</div>
+                                    <div className="empty-state-subtext">NGO pickup requests will appear here</div>
+                                </div>
+                            ) : (
+                                <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                    {requests.map(req => {
+                                        const res = resources.find(r => r.id === req.resourceId);
+                                        return (
+                                            <div key={req.id} className="resource-card" style={{ padding: '20px 24px' }}>
+                                                <div className="resource-header">
+                                                    <span className="resource-category category-food" style={{ fontSize: '11px' }}>
+                                                        📋 Request
+                                                    </span>
+                                                    <span className={`status-badge status-${(req.status || 'accepted').toLowerCase()}`}>
+                                                        {req.status || 'ACCEPTED'}
+                                                    </span>
+                                                </div>
+                                                <div className="resource-info" style={{ marginTop: '10px', marginBottom: '4px' }}>
+                                                    <div className="resource-info-item"><span className="resource-info-icon">🏥</span><span><strong>{req.ngoName || req.ngoId}</strong></span></div>
+                                                    <div className="resource-info-item"><span className="resource-info-icon">📦</span><span>{res ? `${res.category} — ${res.quantity}` : req.resourceId}</span></div>
+                                                    <div className="resource-info-item"><span className="resource-info-icon">📅</span><span>{formatDate(req.createdAt)}</span></div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </>
+                    )}
+
+                    {/* ── Tab: All Users ── */}
+                    {adminTab === 'users' && (
+                        <>
+                            <div className="section-label" style={{ marginTop: '8px' }}>All Registered Users (live)</div>
+                            {users.length === 0 ? (
+                                <div className="empty-state">
+                                    <span className="empty-state-icon">👤</span>
+                                    <div className="empty-state-text">No users yet</div>
+                                    <div className="empty-state-subtext">Registered users will appear here</div>
+                                </div>
+                            ) : (
+                                <div className="admin-grid">
+                                    {users.map(u => (
+                                        <div key={u.uid} className="admin-card fade-up">
+                                            <div style={{ fontSize: '32px', marginBottom: '10px' }}>
+                                                {u.role === 'donor' ? '🤲' : u.role === 'ngo' ? '🏥' : '⚙️'}
+                                            </div>
+                                            <div className="resource-title" style={{ marginBottom: '10px', fontSize: '16px' }}>{u.name}</div>
+                                            <div className="resource-info">
+                                                <div className="resource-info-item"><span className="resource-info-icon">✉</span><span>{u.email}</span></div>
+                                                <div className="resource-info-item">
+                                                    <span className="resource-info-icon">👤</span>
+                                                    <span className={`status-badge status-${u.role === 'admin' ? 'completed' : u.verified ? 'available' : 'reserved'}`} style={{ fontSize: '10px' }}>
+                                                        {u.role.toUpperCase()} {u.role === 'ngo' ? (u.verified ? '✓' : '⏳') : ''}
+                                                    </span>
+                                                </div>
+                                                <div className="resource-info-item"><span className="resource-info-icon">📅</span><span>Joined {formatDate(u.createdAt?.toDate ? u.createdAt.toDate().toISOString() : u.createdAt)}</span></div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </>
+                    )}
+
+                    {notification && <Notification message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}
+                </>
+            );
+        }
+
+        
+        function ImpactDashboard() {
+            const [resources, setResources] = useState([]);
+            const [ngoCount, setNgoCount]   = useState(0);
+            const unsubResRef   = useRef(null);
+            const unsubUsersRef = useRef(null);
+            const chartRef      = useRef(null); 
+
+            useEffect(() => {
+                
+                unsubResRef.current = fbListenAllResources((docs) => setResources(docs));
+
+              
+                unsubUsersRef.current = fbListenUsers((docs) => {
+                    setNgoCount(docs.filter(u => u.role === 'ngo' && u.verified).length);
+                });
+
+                return () => {
+                    if (unsubResRef.current)   unsubResRef.current();
+                    if (unsubUsersRef.current) unsubUsersRef.current();
+                    
+                    if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null; }
+                };
+            }, []);
+
+            const stats = {
+                total:     resources.length,
+                completed: resources.filter(r => r.status === 'COMPLETED').length,
+                reserved:  resources.filter(r => r.status === 'RESERVED').length,
+                available: resources.filter(r => r.status === 'AVAILABLE').length
+            };
+            const categoryStats = { Food: 0, Clothes: 0, Devices: 0, Crops: 0, Medicine: 0 };
+            resources.forEach(r => { if (categoryStats[r.category] !== undefined) categoryStats[r.category]++; });
+
+            
+            useEffect(() => {
+                const ctx = document.getElementById('categoryChart');
+                if (!ctx) return;
+
+                const data = {
+                    labels:   Object.keys(categoryStats),
+                    datasets: [{
+                        data:            Object.values(categoryStats),
+                        backgroundColor: ['#CBB7A6','#B7C89A','#7D94B5','#C29591','#d4b896'],
+                        borderWidth:     4,
+                        borderColor:     '#FDFAF7'
+                    }]
+                };
+
+                if (chartRef.current) {
+                    
+                    chartRef.current.data = data;
+                    chartRef.current.update('none'); 
+                } else {
+                    chartRef.current = new Chart(ctx, {
+                        type: 'doughnut',
+                        data,
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: { padding: 18, font: { size: 13, family: 'DM Sans' }, color: '#6B5B55' }
+                                }
+                            },
+                            cutout: '62%'
+                        }
+                    });
+                }
+            }, [resources]);
+
+            return (
+                <>
+                    <div className="dashboard-header">
+                        <div>
+                            <div className="dashboard-title">Impact Dashboard</div>
+                            <div className="dashboard-subtitle">Tracking the difference we make together</div>
+                        </div>
+                    </div>
+
+                    <div className="stats-grid">
+                        <div className="stat-card fade-up fade-up-1">
+                            <span className="stat-card-icon">📦</span>
+                            <div className="stat-value">{stats.total}</div>
+                            <div className="stat-label">Resources Donated</div>
+                            <div className="stat-trend">Growing daily</div>
+                        </div>
+                        <div className="stat-card fade-up fade-up-2">
+                            <span className="stat-card-icon">✓</span>
+                            <div className="stat-value">{stats.completed}</div>
+                            <div className="stat-label">Successfully Delivered</div>
+                            <div className="stat-trend">{stats.total > 0 ? Math.round((stats.completed/stats.total)*100) : 0}% completion rate</div>
+                        </div>
+                        <div className="stat-card fade-up fade-up-3">
+                            <span className="stat-card-icon">🏥</span>
+                            <div className="stat-value">{ngoCount}</div>
+                            <div className="stat-label">NGOs Connected</div>
+                            <div className="stat-trend">Verified &amp; active</div>
+                        </div>
+                        <div className="stat-card fade-up fade-up-4">
+                            <span className="stat-card-icon">🌱</span>
+                            <div className="stat-value">{stats.available}</div>
+                            <div className="stat-label">Available Now</div>
+                            <div className="stat-trend">Ready to help</div>
+                        </div>
+                    </div>
+
+                    <div className="chart-container">
+                        <div className="chart-title">Resources by Category</div>
+                        <div style={{ height: '340px', position: 'relative' }}>
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div className="impact-summary">
+                        <div className="impact-title"><span>🌍</span> Environmental &amp; Social Impact</div>
+                        <div className="impact-items">
+                            <div className="impact-item"><span className="impact-item-icon">✓</span><span><strong>{stats.completed}</strong> resources saved from waste</span></div>
+                            <div className="impact-item"><span className="impact-item-icon">📦</span><span><strong>{stats.total}</strong> donations facilitated</span></div>
+                            <div className="impact-item"><span className="impact-item-icon">🏥</span><span><strong>{ngoCount}</strong> NGOs connected</span></div>
+                            <div className="impact-item"><span className="impact-item-icon">🌱</span><span>Building sustainable communities</span></div>
+                        </div>
+                    </div>
+                </>
+            );
+        }
+
+        
+        function LandingPage({ onGetStarted }) {
+            useEffect(() => {
+                
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+                }, { threshold: 0.12 });
+                document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+                return () => observer.disconnect();
+            }, []);
+
+            return (
+                <div className="landing-page">
+                    {/* Nav */}
+                    <nav className="land-nav">
+                        <div className="land-nav-logo">
+                            <div className="land-nav-logo-mark">🌿</div>
+                            ResourceBridge
+                        </div>
+                        <div className="land-nav-links">
+                            <button className="btn btn-secondary btn-small" onClick={onGetStarted} style={{ borderRadius: '50px' }}>Sign In</button>
+                            <button className="btn-land-primary" style={{ padding: '10px 24px', fontSize: '13.5px', borderRadius: '50px' }} onClick={onGetStarted}>Get Started</button>
+                        </div>
+                    </nav>
+
+                    {/* Hero */}
+                    <section className="land-hero">
+                        <div className="land-hero-bg">
+                            <div className="blob blob-1"></div>
+                            <div className="blob blob-2"></div>
+                            <div className="blob blob-3"></div>
+                        </div>
+                        <div className="land-hero-inner">
+                            <div className="land-hero-left">
+                                <div className="land-eyebrow">
+                                    <div className="land-eyebrow-dot"></div>
+                                    Sustainability Platform
+                                </div>
+                                <h1 className="land-hero-title">
+                                    Turn surplus<br />
+                                    into <em>hope</em> for<br />
+                                    <span className="title-line-accent">communities</span>
+                                </h1>
+                                <p className="land-hero-desc">
+                                    ResourceBridge connects donors with verified NGOs — ensuring food, clothes, medicine, and essentials reach those who need them most.
+                                </p>
+                                <div className="land-hero-actions">
+                                    <button className="btn-land-primary" onClick={onGetStarted}>Start donating free →</button>
+                                    <button className="btn-land-ghost" onClick={onGetStarted}>
+                                        I'm an NGO
+                                        <span className="btn-land-ghost-arrow">→</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="land-hero-right">
+                                {/* Floating badges */}
+                                <div className="hero-float-badge hfb-1">
+                                    <div className="hfb-dot hfb-dot-green"></div>
+                                    3 donations live nearby
+                                </div>
+                                <div className="hero-float-badge hfb-2">
+                                    <div className="hfb-dot hfb-dot-orange"></div>
+                                    NGO verified today ✓
+                                </div>
+
+                                <div className="hero-visual-frame">
+                                    <div className="hero-card-stack">
+                                        <div className="hero-mini-card">
+                                            <div className="hero-mini-icon hmi-food">🌾</div>
+                                            <div className="hero-mini-info">
+                                                <div className="hero-mini-title">50 kg Basmati Rice</div>
+                                                <div className="hero-mini-sub">Pickup from tomorrow · 4.2 km away</div>
+                                            </div>
+                                            <div className="hero-mini-badge hmb-available">Available</div>
+                                        </div>
+                                        <div className="hero-mini-card">
+                                            <div className="hero-mini-icon hmi-clothes">🧥</div>
+                                            <div className="hero-mini-info">
+                                                <div className="hero-mini-title">100 Winter Jackets</div>
+                                                <div className="hero-mini-sub">Hope Foundation · Scheduled</div>
+                                            </div>
+                                            <div className="hero-mini-badge hmb-reserved">Reserved</div>
+                                        </div>
+                                        <div className="hero-mini-card">
+                                            <div className="hero-mini-icon hmi-med">💊</div>
+                                            <div className="hero-mini-info">
+                                                <div className="hero-mini-title">First Aid Supplies</div>
+                                                <div className="hero-mini-sub">Care India NGO · Delivered</div>
+                                            </div>
+                                            <div className="hero-mini-badge hmb-done">Completed</div>
+                                        </div>
+                                    </div>
+                                    <div className="hero-visual-footer">
+                                        <div className="hero-stat-mini">
+                                            <div className="hero-stat-mini-val">3</div>
+                                            <div className="hero-stat-mini-label">Donations</div>
+                                        </div>
+                                        <div className="hero-stat-mini">
+                                            <div className="hero-stat-mini-val">2</div>
+                                            <div className="hero-stat-mini-label">NGOs</div>
+                                        </div>
+                                        <div className="hero-stat-mini">
+                                            <div className="hero-stat-mini-val">1</div>
+                                            <div className="hero-stat-mini-label">Delivered</div>
+                                        </div>
+                                        <div className="hero-stat-mini">
+                                            <div className="hero-stat-mini-val">50km</div>
+                                            <div className="hero-stat-mini-label">Radius</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Ticker */}
+                    <div className="land-ticker">
+                        <div className="land-ticker-inner">
+                            {[1,2].map(i => (
+                                <span key={i} style={{ display: 'inline-flex' }}>
+                                    <span className="land-ticker-item"><span>Food</span> <span className="ticker-dot"></span></span>
+                                    <span className="land-ticker-item"><span>Clothes</span> <span className="ticker-dot"></span></span>
+                                    <span className="land-ticker-item"><span>Medicine</span> <span className="ticker-dot"></span></span>
+                                    <span className="land-ticker-item"><span>Devices</span> <span className="ticker-dot"></span></span>
+                                    <span className="land-ticker-item"><span>Crops</span> <span className="ticker-dot"></span></span>
+                                    <span className="land-ticker-item">Surplus to Need <span className="ticker-dot"></span></span>
+                                    <span className="land-ticker-item">Zero Waste <span className="ticker-dot"></span></span>
+                                    <span className="land-ticker-item">Community Impact <span className="ticker-dot"></span></span>
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* How It Works */}
+                    <div className="land-section">
+                        <div className="reveal">
+                            <div className="land-section-eyebrow">How it works</div>
+                            <div className="land-section-title">Simple steps, <em>real impact</em></div>
+                        </div>
+                        <div className="how-grid">
+                            <div className="how-card reveal" style={{ transitionDelay: '0.05s' }}>
+                                <div className="how-number">01</div>
+                                <span className="how-icon">🌾</span>
+                                <div className="how-title">List your surplus</div>
+                                <p className="how-desc">Donors post available resources — food, clothes, devices, medicine — with quantity, location and pickup window in under 2 minutes.</p>
+                            </div>
+                            <div className="how-card reveal" style={{ transitionDelay: '0.12s' }}>
+                                <div className="how-number">02</div>
+                                <span className="how-icon">🏥</span>
+                                <div className="how-title">NGOs find & reserve</div>
+                                <p className="how-desc">Verified NGOs within 50 km browse available donations, filter by category, and reserve what their community needs most.</p>
+                            </div>
+                            <div className="how-card reveal" style={{ transitionDelay: '0.19s' }}>
+                                <div className="how-number">03</div>
+                                <span className="how-icon">🤝</span>
+                                <div className="how-title">Pickup & deliver</div>
+                                <p className="how-desc">Coordinates are shared, pickup is arranged, and resources reach people in need — tracked end to end on the platform.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Impact Numbers */}
+                    <div className="land-impact-strip">
+                        <div className="land-impact-inner">
+                            <div className="reveal">
+                                <div className="land-impact-num">12k+</div>
+                                <div className="land-impact-label">Resources Donated</div>
+                            </div>
+                            <div className="land-impact-divider reveal"></div>
+                            <div className="reveal">
+                                <div className="land-impact-num">340+</div>
+                                <div className="land-impact-label">Verified NGOs</div>
+                            </div>
+                            <div className="land-impact-divider reveal"></div>
+                            <div className="reveal">
+                                <div className="land-impact-num">50km</div>
+                                <div className="land-impact-label">Smart Radius</div>
+                            </div>
+                            <div className="land-impact-divider reveal"></div>
+                            <div className="reveal">
+                                <div className="land-impact-num">94%</div>
+                                <div className="land-impact-label">Completion Rate</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Roles */}
+                    <div className="land-roles-section">
+                        <div className="land-roles-inner">
+                            <div className="reveal">
+                                <div className="land-section-eyebrow">Who it's for</div>
+                                <div className="land-section-title">Built for <em>everyone</em><br />in the chain</div>
+                            </div>
+                            <div className="land-roles-grid">
+                                <div className="role-card reveal" style={{ transitionDelay: '0.06s' }} onClick={onGetStarted}>
+                                    <span className="role-emoji">🤲</span>
+                                    <div className="role-title">Donors</div>
+                                    <p className="role-desc">Individuals, businesses, or farms with surplus goods who want to give back without the hassle.</p>
+                                    <div className="role-pill-list">
+                                        <span className="role-pill">Food</span>
+                                        <span className="role-pill">Clothes</span>
+                                        <span className="role-pill">Devices</span>
+                                        <span className="role-pill">Medicine</span>
+                                        <span className="role-pill">Crops</span>
+                                    </div>
+                                    <div className="role-cta">Register as Donor →</div>
+                                </div>
+                                <div className="role-card reveal" style={{ transitionDelay: '0.13s' }} onClick={onGetStarted}>
+                                    <span className="role-emoji">🏥</span>
+                                    <div className="role-title">NGOs</div>
+                                    <p className="role-desc">Verified non-profits and community organisations searching for resources to serve those in need.</p>
+                                    <div className="role-pill-list">
+                                        <span className="role-pill">Location-based</span>
+                                        <span className="role-pill">50 km radius</span>
+                                        <span className="role-pill">Filter by type</span>
+                                    </div>
+                                    <div className="role-cta">Join as NGO →</div>
+                                </div>
+                                <div className="role-card reveal" style={{ transitionDelay: '0.20s' }} onClick={onGetStarted}>
+                                    <span className="role-emoji">⚙️</span>
+                                    <div className="role-title">Admins</div>
+                                    <p className="role-desc">Platform moderators who verify NGO credentials, ensure quality, and oversee the health of the ecosystem.</p>
+                                    <div className="role-pill-list">
+                                        <span className="role-pill">Verification</span>
+                                        <span className="role-pill">Moderation</span>
+                                        <span className="role-pill">Analytics</span>
+                                    </div>
+                                    <div className="role-cta">Admin Access →</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Quote Section */}
+                    <div className="land-quote-section reveal">
+                        <div className="land-quote-visual">
+                            <div className="land-quote-grid">
+                                <div className="land-quote-tile lqt-1">
+                                    <div className="lqt-emoji">🌾</div>
+                                    <div className="lqt-text">Food that feeds families</div>
+                                </div>
+                                <div className="land-quote-tile lqt-2">
+                                    <div className="lqt-emoji">🤝</div>
+                                    <div className="lqt-text">Communities built on trust</div>
+                                </div>
+                                <div className="land-quote-tile lqt-3">
+                                    <div className="lqt-emoji">🌱</div>
+                                    <div className="lqt-text">Zero waste, maximum impact</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div className="land-section-eyebrow" style={{ marginBottom: '20px' }}>From our community</div>
+                            <blockquote className="land-quote-text">
+                                "We used to throw out <em>hundreds of kilos</em> of surplus rice every month. Now it reaches families within 24 hours."
+                            </blockquote>
+                            <div className="land-quote-source">
+                                <div className="land-quote-avatar">🙋</div>
+                                <div>
+                                    <div className="land-quote-name">Rajesh Kumar</div>
+                                    <div className="land-quote-role">Donor — Mumbai</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* CTA Banner */}
+                    <div className="land-cta-banner reveal">
+                        <div>
+                            <div className="land-cta-title">Ready to make<br /><em>surplus matter?</em></div>
+                            <div className="land-cta-sub">Join thousands of donors and NGOs already on the platform.</div>
+                        </div>
+                        <div className="land-cta-actions">
+                            <button className="btn-land-white" onClick={onGetStarted}>Create free account</button>
+                            <button className="btn-land-outline-white" onClick={onGetStarted}>Sign in</button>
+                        </div>
+                    </div>
+
+                    {/* Footer */}
+                    <footer className="land-footer">
+                        <div className="land-footer-inner">
+                            <div className="land-footer-logo">ResourceBridge</div>
+                            <div style={{ display: 'flex', gap: '24px' }}>
+                                <button className="btn btn-ghost btn-small" onClick={onGetStarted} style={{ color: 'rgba(203,183,166,0.6)', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '50px' }}>Sign In</button>
+                                <button className="btn-land-primary" style={{ borderRadius: '50px', padding: '9px 22px', fontSize: '13px' }} onClick={onGetStarted}>Get Started</button>
+                            </div>
+                        </div>
+                        <div className="land-footer-copy">© 2025 ResourceBridge · Surplus to Need · Built with care</div>
+                    </footer>
+                </div>
+            );
+        }
+
+        
+        function App() {
+            const [user, setUser]               = useState(window.__fbUser || null);
+            const [showLanding, setShowLanding] = useState(!window.__fbUser);
+            const [activeView, setActiveView]   = useState('dashboard');
+            const [updateTrigger, setUpdateTrigger] = useState(0);
+            const [authChecked, setAuthChecked] = useState(window.__fbAuthReady);
+            const selfProfileUnsubRef = useRef(null);
+
+            
+            const attachSelfProfileListener = (uid) => {
+                
+                if (selfProfileUnsubRef.current) {
+                    selfProfileUnsubRef.current();
+                    selfProfileUnsubRef.current = null;
+                }
+                if (!uid) return;
+                console.log("[App] Attaching self-profile listener for uid:", uid);
+                selfProfileUnsubRef.current = fbDB.collection("users").doc(uid)
+                    .onSnapshot(
+                        snap => {
+                            if (!snap.exists) return;
+                            const updated = { uid: snap.id, ...snap.data() };
+                            console.log("[App] Self-profile updated — role:", updated.role, "verified:", updated.verified);
+                            window.__fbUser = updated;
+                            setUser(updated);
+                        },
+                        e => console.error("[App] Self-profile listener error:", e.message)
+                    );
+            };
+
+            useEffect(() => {
+                
+                window.__fbAuthCallback = (profile) => {
+                    console.log("[App] __fbAuthCallback fired — profile:", profile ? profile.role : 'null');
+                    setAuthChecked(true);
+                    setUser(profile);
+                    if (!profile) {
+                        setShowLanding(true);
+                        setActiveView('dashboard');
+                        
+                        if (selfProfileUnsubRef.current) {
+                            selfProfileUnsubRef.current();
+                            selfProfileUnsubRef.current = null;
+                        }
+                    } else {
+                        console.log("[App] Auth callback — routing to dashboard for role:", profile.role);
+                        setShowLanding(false);
+                        attachSelfProfileListener(profile.uid);
+                    }
+                };
+                
+                if (window.__fbAuthReady) {
+                    setAuthChecked(true);
+                    setUser(window.__fbUser);
+                    if (window.__fbUser) {
+                        setShowLanding(false);
+                        attachSelfProfileListener(window.__fbUser.uid);
+                    }
+                }
+                return () => {
+                    window.__fbAuthCallback = null;
+                    if (selfProfileUnsubRef.current) selfProfileUnsubRef.current();
+                };
+            }, []);
+
+            
+            if (!authChecked) {
+                return (
+                    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface)' }}>
+                        <div style={{ textAlign: 'center', color: 'var(--text-soft)' }}>
+                            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🌿</div>
+                            <div style={{ fontFamily: 'var(--font-display)', fontSize: '22px', color: 'var(--brown)' }}>ResourceBridge</div>
+                            <div style={{ marginTop: '10px', fontSize: '13px' }}>Loading…</div>
+                        </div>
+                    </div>
+                );
+            }
+
+            const handleLogin = (profile) => {
+                console.log("[App] handleLogin — role:", profile.role, "uid:", profile.uid);
+                window.__fbUser = profile;
+                setUser(profile);
+                setShowLanding(false);
+                setActiveView('dashboard'); 
+                attachSelfProfileListener(profile.uid);
+            };
+
+            const handleLogout = async () => {
+                console.log("[App] Signing out");
+                if (selfProfileUnsubRef.current) {
+                    selfProfileUnsubRef.current();
+                    selfProfileUnsubRef.current = null;
+                }
+                
+                window.__fbSkipAuthCallback = false;
+                await fbAuth.signOut();
+                window.__fbUser = null;
+                setUser(null);
+                setShowLanding(true);
+                setActiveView('dashboard');
+            };
+
+            const handleUpdate = () => setUpdateTrigger(p => p + 1);
+
+            if (showLanding && !user) return <LandingPage onGetStarted={() => setShowLanding(false)} />;
+            if (!user)                return <Auth onLogin={handleLogin} />;
+
+            
+            console.log("[App] Rendering dashboard — role:", user.role, "uid:", user.uid, "verified:", user.verified);
+
+            const roleLabel = { donor: 'Donor', ngo: 'NGO', admin: 'Administrator' };
+            const roleIcon  = { donor: '🤲',   ngo: '🏥',  admin: '⚙️' };
+            const tabLabel  = { donor: 'My Donations', ngo: 'Browse Resources', admin: 'Admin Panel' };
+
+            return (
+                <div className="app-container">
+                    <header className="header">
+                        <div className="logo">
+                            <div className="logo-leaf">🌿</div>
+                            <div>
+                                ResourceBridge
+                                <span className="logo-tagline">Surplus to Need</span>
+                            </div>
+                        </div>
+                        <div className="header-right">
+                            <div className="user-pill">
+                                <div className="user-avatar">{roleIcon[user.role] || '👤'}</div>
+                                <div>
+                                    <div className="user-name">{user.name}</div>
+                                    <div className="user-role">{roleLabel[user.role] || user.role}</div>
+                                </div>
+                            </div>
+                            <button className="btn btn-ghost btn-small" onClick={handleLogout}>Sign out</button>
+                        </div>
+                    </header>
+
+                    <div className="content">
+                        <div className="tab-container">
+                            <button className={`tab ${activeView === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveView('dashboard')}>
+                                {tabLabel[user.role] || 'Dashboard'}
+                            </button>
+                            <button className={`tab ${activeView === 'impact' ? 'active' : ''}`} onClick={() => setActiveView('impact')}>
+                                Impact Dashboard
+                            </button>
+                        </div>
+
+                        {activeView === 'dashboard' && (
+                            <>
+                                {user.role === 'donor' && (
+                                    <DonorDashboard user={user} onUpdate={handleUpdate} />
+                                )}
+                                {user.role === 'ngo' && (
+                                    <NGODashboard user={user} onUpdate={handleUpdate} />
+                                )}
+                                {user.role === 'admin' && (
+                                    <AdminDashboard user={user} onUpdate={handleUpdate} />
+                                )}
+                                {!['donor','ngo','admin'].includes(user.role) && (
+                                    <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-soft)' }}>
+                                        <div style={{ fontSize: '40px', marginBottom: '12px' }}>⚠️</div>
+                                        <div style={{ fontFamily: 'var(--font-display)', fontSize: '22px' }}>
+                                            Unrecognised role: "{user.role}"
+                                        </div>
+                                        <div style={{ marginTop: '8px', fontSize: '14px' }}>
+                                            Please contact support or sign out and try again.
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        )}
+                        {activeView === 'impact' && <ImpactDashboard />}
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
